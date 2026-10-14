@@ -139,10 +139,10 @@ docker compose ps</code></pre><p>En modo Docker, ambos servicios quedan en segun
 <h3>Visualización local de la documentación</h3><p>Puedes abrir el archivo directamente. Si necesitas una URL local, copia únicamente el HTML a una carpeta pública y sirve esa carpeta. Así no expones .env ni el resto del repositorio.</p><pre><code># Desde neoconexion/, en otra terminal de PowerShell
 New-Item -ItemType Directory -Force ..\manual-publico
 Copy-Item .\documentacion.html ..\manual-publico\index.html
-.\venv\Scripts\python.exe -m http.server 8010 --bind 127.0.0.1 --directory ..\manual-publico</code></pre><p class="small">Abre http://127.0.0.1:8010/. Si el puerto ya está ocupado por la vista actual, usa otro, por ejemplo 8011. Este servidor solo muestra documentación: no inicia la API.</p>
-<details><summary>¿El puerto 8000 ya está ocupado?</summary><p>Puede haber una API abierta en otra terminal. Comprueba primero <code>http://localhost:8000/health</code>. Cierra solo el proceso del proyecto que ya no necesites, o inicia temporalmente con <code>--port 8001</code>. En ese caso, utiliza el nuevo puerto también en tus solicitudes.</p></details>
-<details><summary>¿El simulador muestra un guion en lugar del score?</summary><p>Revisa los campos señalados. Los dos valores de experiencia son obligatorios y admiten decimales entre 0 y 100 en esta demostración. Las ubicaciones no pueden estar vacías. Las listas de skills pueden estar vacías, pero no contener entradas vacías entre comas. Los resultados anteriores se borran mientras los datos sean inválidos.</p></details>
-<details><summary>¿La API no arranca?</summary><p>Revisa que Docker esté activo, el contenedor esté healthy y las credenciales coincidan. El lifespan bloquea el arranque si no puede verificar Neo4j o crear los constraints. Consulta <code>docker compose logs neo4j</code> y comprueba que los puertos no estén ocupados.</p></details><details><summary>¿El candidato obtiene cero recomendaciones?</summary><p>Comprueba las skills normalizadas y el prefiltro: debe existir al menos una skill común. Después revisa minScore. Un score teórico positivo no evita la exclusión por el prefiltro.</p></details></section>
+.\venv\Scripts\python.exe -m http.server 8010 --bind 127.0.0.1 --directory ..\manual-publico</code></pre>
+
+
+</section>
 
 <section id="calidad"><div class="eyebrow">10 / Validación</div><h2>Pruebas, resultados y seguridad</h2><div class="grid"><div class="card"><span class="tag">VERIFICACIÓN REGISTRADA · 13 OCT 2026</span><h3>98 pruebas aprobadas en Docker</h3><p>Suite completa de la reconstrucción ejecutada dentro del contenedor de la API, con Neo4j real. El registro reproducible está en VERIFICATION.md. API y Neo4j saludables; Swagger y ejemplos curl verificados.</p><pre><code># Pruebas dentro del contenedor de la API
 docker compose exec -T api python -m pytest -q
