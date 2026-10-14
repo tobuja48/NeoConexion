@@ -1,6 +1,6 @@
 # Índice de los 40 pull requests
 
-Cada PR se basa en la rama anterior y contiene su incremento. **No se ha fusionado ningún PR automáticamente.** La rama `rebuild/40-delivery-guide` contiene la versión completa.
+Los 40 PRs fueron integrados en `main`, en orden y mediante merge commits, por solicitud del usuario. La tabla conserva las ramas originales para consultar el historial de cada incremento.
 
 | Orden | Pull request | Cambio | Rama | Historias relacionadas |
 | --- | --- | --- | --- | --- |
@@ -45,11 +45,8 @@ Cada PR se basa en la rama anterior y contiene su incremento. **No se ha fusiona
 | 39 | [#63](https://github.com/tobuja48/NeoConexion/pull/63) | Agregar guía técnica HTML con simulador de matching | `rebuild/39-html-manual` | Infraestructura/documentación |
 | 40 | [#64](https://github.com/tobuja48/NeoConexion/pull/64) | Documentar ejecución, pruebas y trazabilidad de historias | `rebuild/40-delivery-guide` | Infraestructura/documentación |
 
-## Cómo revisar e integrar
+## Integración realizada
 
-1. Revisa el PR 01 contra main y los siguientes contra la rama anterior. Los primeros incrementos aún no forman una aplicación ejecutable; cada PR declara las validaciones realizadas.
-2. Integra en orden ascendente. Para conservar la ascendencia de esta cadena, usa merge commits, evitando squash/rebase de las ramas intermedias.
-3. Después de integrar una rama, cambia la base del siguiente PR a main antes de integrarlo. No borres una rama que todavía sea base de otro PR. GitHub puede actualizar bases automáticamente, pero compruébalo.
-4. Al terminar, ejecuta la suite completa y Docker Compose desde main. Solo entonces trata main como la entrega completa.
+La cadena se integró en orden ascendente, cambiando la base de cada PR a main antes de fusionarlo y conservando su ascendencia mediante merge commits. Las ramas originales se mantienen como referencia. La versión completa se obtiene clonando main.
 
-Los PRs que cubren historias incluyen referencias de cierre para que GitHub las procese cuando se integren en la rama predeterminada. No se cerraron issues solo por crear los PRs.
+Los PRs vinculados a historias incluyen referencias de cierre procesadas por GitHub al integrarse en la rama predeterminada. La cobertura funcional y sus límites están documentados en USER_STORIES.md.

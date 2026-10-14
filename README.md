@@ -4,7 +4,7 @@ API de compatibilidad laboral construida con FastAPI, Python 3.12/3.13 y Neo4j. 
 
 ## Estado de la entrega
 
-Reconstrucción sobre el repositorio inicial mediante **40 PRs encadenados**. La versión completa está en `rebuild/40-delivery-guide` hasta integrar la cadena en `main`. Se reutilizaron módulos comprobados del prototipo local, se separaron las reglas del motor y se añadieron catálogo y diagnóstico directo. No es una reescritura íntegra de cada línea.
+Reconstrucción sobre el repositorio inicial mediante **40 PRs encadenados**. La versión completa está integrada en `main`; los 40 PRs conservan el historial de cada incremento. Se reutilizaron módulos comprobados del prototipo local, se separaron las reglas del motor y se añadieron catálogo y diagnóstico directo. No es una reescritura íntegra de cada línea.
 
 - [Índice de los 40 PRs](docs/PULL_REQUESTS.md): orden, alcance y ramas.
 - [Historias y cobertura](docs/USER_STORIES.md): las 24 historias reales del repositorio.
@@ -16,7 +16,7 @@ Reconstrucción sobre el repositorio inicial mediante **40 PRs encadenados**. La
 Requisito: Docker Desktop encendido (WSL 2 en Windows) o Docker Engine con Compose.
 
 ```powershell
-git clone --branch rebuild/40-delivery-guide https://github.com/tobuja48/NeoConexion.git
+git clone --branch main https://github.com/tobuja48/NeoConexion.git
 cd NeoConexion
 Copy-Item .env.example .env
 # Edita .env: establece NEO4J_USER=neo4j y una contraseña propia en NEO4J_PASSWORD.

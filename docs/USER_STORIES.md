@@ -1,6 +1,6 @@
 # Trazabilidad de historias
 
-Revisión: 13 de octubre de 2026. Las historias se consultaron directamente en GitHub. “Cubierta en backend” describe el caso de uso de la API, accesible desde Swagger; no implica una interfaz final, cuentas o permisos. Los PRs permanecen abiertos hasta revisión e integración.
+Revisión: 13 de octubre de 2026. Las historias se consultaron directamente en GitHub. “Cubierta en backend” describe el caso de uso de la API, accesible desde Swagger; no implica una interfaz final, cuentas o permisos. Los PRs de esta entrega están integrados en main; la cobertura se limita a las funciones descritas en esta tabla.
 
 | Historia | Cobertura | Evidencia y alcance |
 | --- | --- | --- |
