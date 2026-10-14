@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from app.api.dependencies import get_matching_service
 from app.schemas.common import Identifier
 from app.schemas.recommendation import (
-    CandidateRecommendation, CandidateRecommendations, JobCandidates, JobRecommendation, MatchSchema,
+    CandidateRecommendation, CandidateRecommendations, JobCandidates, JobRecommendation, MatchSchema, SkillDiagnosis,
 )
 from app.services.matching_service import MatchingService
 
@@ -38,3 +38,12 @@ def recommend_candidates(id: Identifier, service: Service,
                                 **MatchSchema.from_result(result).model_dump())
         for candidate, result in pairs
     ])
+
+
+@router.get("/candidates/{id}/jobs/{job_id}/diagnosis", response_model=SkillDiagnosis,
+            summary="Diagnosticar habilidades frente a una vacante",
+            description="Compara cualquier par existente, incluso sin habilidades compartidas. No usa IA generativa.")
+def diagnose_skills(id: Identifier, job_id: Identifier, service: Service) -> SkillDiagnosis:
+    result, passes = service.diagnose(id, job_id)
+    return SkillDiagnosis(candidate_id=id, job_id=job_id, passes_skill_prefilter=passes,
+                          **MatchSchema.from_result(result).model_dump())

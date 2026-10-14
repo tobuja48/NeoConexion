@@ -49,3 +49,9 @@ class JobCandidates(PublicModel):
     job_id: str
     total: int = Field(ge=0, description="Resultados que cumplen minScore antes de aplicar limit")
     recommendations: list[CandidateRecommendation]
+
+
+class SkillDiagnosis(MatchSchema):
+    candidate_id: str
+    job_id: str
+    passes_skill_prefilter: bool = Field(description="Comparte al menos una habilidad requerida o deseable")
