@@ -2,6 +2,45 @@
 
 API de compatibilidad laboral construida con FastAPI, Python 3.12/3.13 y Neo4j. Registra candidatos y vacantes, busca ofertas y explica su compatibilidad mediante reglas deterministas.
 
+## ¿Qué resuelve?
+
+NeoConexión ayuda a comparar perfiles laborales con los requisitos de una oferta. Una empresa puede consultar un ranking de candidatos y un candidato puede encontrar vacantes o conocer las habilidades que le faltan para un cargo específico.
+
+- Registro y actualización de candidatos, experiencia, ubicación y habilidades.
+- Publicación de vacantes con requisitos obligatorios y deseables.
+- Búsqueda de ofertas por texto, ciudad y modalidad, con paginación.
+- Recomendaciones en ambas direcciones con puntuación y explicación.
+- Diagnóstico directo de habilidades faltantes, incluso sin coincidencias en el ranking.
+- Documentación interactiva de la API y manual HTML con simulador.
+
+## Contenido
+
+- [Tecnologías](#tecnologías)
+- [Instalación con Docker](#arranque-con-docker)
+- [Configuración](#configuración)
+- [Desarrollo y pruebas](#desarrollo-y-pruebas)
+- [Operaciones de la API](#operaciones)
+- [Primera demostración](#primera-demostración-en-swagger)
+- [Arquitectura](#arquitectura)
+- [Estructura del proyecto](#estructura-del-proyecto)
+- [Solución de problemas](#solución-de-problemas)
+- [Límites y seguridad](#límites-y-seguridad)
+
+## Tecnologías
+
+| Tecnología | Función en el proyecto |
+| --- | --- |
+| Python 3.12/3.13 | Lenguaje del backend y del algoritmo de compatibilidad |
+| FastAPI | Rutas HTTP, inyección de dependencias y contrato OpenAPI |
+| Pydantic y pydantic-settings | Validación de datos y configuración del entorno |
+| Neo4j y driver oficial | Persistencia de nodos, relaciones y consultas Cypher |
+| Uvicorn | Servidor ASGI que ejecuta la API |
+| Docker Compose | Arranque de la API y Neo4j con red, volumen y healthchecks |
+| pytest y HTTPX | Pruebas unitarias, contratos HTTP e integración |
+| HTML, CSS y JavaScript | Manual de exposición y simulador local |
+
+Las versiones de las dependencias Python están fijadas en [requirements.txt](requirements.txt). Neo4j utiliza la imagen definida en [docker-compose.yml](docker-compose.yml).
+
 ## Estado de la entrega
 
 Reconstrucción sobre el repositorio inicial mediante **40 PRs encadenados**. La versión completa está integrada en `main`; los 40 PRs conservan el historial de cada incremento. Se reutilizaron módulos comprobados del prototipo local, se separaron las reglas del motor y se añadieron catálogo y diagnóstico directo. No es una reescritura íntegra de cada línea.
@@ -44,6 +83,23 @@ docker compose logs --tail 50 api
 docker compose restart api
 docker compose stop
 ```
+
+## Configuración
+
+Copia [.env.example](.env.example) a `.env` y ajusta sus valores antes del primer arranque.
+
+| Variable | Uso |
+| --- | --- |
+| `NEO4J_URI` | Conexión Bolt para ejecución local; Compose configura la dirección interna de la API |
+| `NEO4J_USER` | Usuario de la base de datos |
+| `NEO4J_PASSWORD` | Contraseña de Neo4j; sustituye el valor de desarrollo del ejemplo |
+| `API_KEY` | Clave opcional enviada mediante la cabecera `X-API-Key` |
+| `LOG_LEVEL` | Nivel de registro, por ejemplo `INFO` |
+| `API_PORT` | Puerto del host para la API; predeterminado `8000` |
+| `NEO4J_HTTP_PORT` | Puerto del host para Neo4j Browser; predeterminado `7474` |
+| `NEO4J_BOLT_PORT` | Puerto del host para Bolt; predeterminado `7687` |
+
+El archivo `.env` está excluido de Git. En Linux o macOS, usa `cp .env.example .env` en lugar de `Copy-Item`.
 
 ## Desarrollo y pruebas
 
@@ -90,6 +146,44 @@ Los rankings admiten `limit` (1–50) y `minScore` (0–100), ordenan por score 
 
 Los contratos usan camelCase y rechazan campos desconocidos. POST reemplaza todo el recurso, no hace PATCH. X-API-Key solo se exige cuando API_KEY está configurada. No hay autorización por propietario.
 
+## Primera demostración en Swagger
+
+1. Abre `/docs` en la dirección donde corre la API. Si configuraste `API_KEY`, pulsa **Authorize** e introduce la clave.
+2. Abre `POST /api/v1/candidates`, pulsa **Try it out** y registra este candidato:
+
+```json
+{
+  "id": "demo-candidato",
+  "name": "Ana Pérez",
+  "location": "Bogotá",
+  "yearsOfExperience": 3,
+  "skills": ["Python", "Docker"],
+  "preferredWorkMode": "remote"
+}
+```
+
+3. En `POST /api/v1/jobs`, registra esta vacante:
+
+```json
+{
+  "id": "demo-vacante",
+  "company": "Empresa de ejemplo",
+  "title": "Desarrollador Backend",
+  "location": "Bogotá",
+  "workMode": "remote",
+  "requiredExperience": 3,
+  "requiredSkills": ["Python", "SQL"],
+  "desiredSkills": ["Docker"]
+}
+```
+
+4. Consulta `GET /api/v1/jobs/demo-vacante/candidates` para ver el ranking.
+5. Consulta `GET /api/v1/candidates/demo-candidato/jobs/demo-vacante/diagnosis` para ver la comparación directa.
+
+En este ejemplo, falta **SQL**. El componente de habilidades vale **65**, los otros tres componentes valen **100** y la puntuación total es **82.5/100**. El candidato pasa el prefiltro porque comparte Python y Docker. Repetir los POST con esos IDs actualiza los ejemplos existentes.
+
+Swagger envía solicitudes reales y guarda los datos de los POST. El simulador de [documentacion.html](documentacion.html) funciona en el navegador y no modifica Neo4j. GitHub muestra el código del HTML: descarga el repositorio y abre ese archivo en un navegador para utilizarlo.
+
 ## Arquitectura
 
 ```text
@@ -105,6 +199,44 @@ HTTP / Swagger
 Nodos: Candidate, Job, Skill, Company, Location y WorkMode. Relaciones: HAS_SKILL, REQUIRES_SKILL, DESIRES_SKILL, POSTED, LIVES_IN, LOCATED_IN, PREFERS y OFFERS_MODE. Constraints únicos y transacciones de reemplazo evitan duplicados y cambios parciales.
 
 Score = habilidades × 0.50 + experiencia × 0.25 + ubicación × 0.15 + modalidad × 0.10. Las obligatorias pesan 70% y las deseables 30% del componente de habilidades cuando ambas existen; sin deseables, las obligatorias pesan 100%. Sin obligatorias, ese componente vale 100. Experiencia se limita al 100%; remoto elimina penalización por ciudad. Las explicaciones son deterministas, no IA generativa. Salario no interviene en el score.
+
+## Estructura del proyecto
+
+```text
+NeoConexion/
+├── app/
+│   ├── api/v1/           # Endpoints y router versionado
+│   ├── core/             # Configuración, errores, logs y driver
+│   ├── domain/matching/  # Reglas puras y cálculo de compatibilidad
+│   ├── repositories/     # Persistencia y consultas Cypher
+│   ├── schemas/          # Contratos de entrada y salida
+│   ├── services/         # Casos de uso
+│   └── main.py           # Aplicación y ciclo de vida
+├── tests/
+│   ├── unit/             # Reglas, validaciones y contratos
+│   └── integration/      # Operaciones con Neo4j real
+├── docs/                 # Historias y registro de PRs
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── requests.sh           # Recorrido de ejemplo con curl
+├── documentacion.html    # Manual interactivo
+└── VERIFICATION.md       # Evidencia de pruebas
+```
+
+La última verificación registrada incluye **98 pruebas aprobadas**. Consulta [VERIFICATION.md](VERIFICATION.md) para conocer el entorno y los límites de esa comprobación.
+
+## Solución de problemas
+
+| Problema | Qué comprobar |
+| --- | --- |
+| El navegador muestra “Connection refused” | Enciende Docker Desktop y ejecuta `docker compose up -d --wait`; comprueba el puerto configurado en `.env` |
+| Un puerto está ocupado | Ajusta los puertos del host en `.env` y usa las nuevas direcciones; para Python local, ajusta también `NEO4J_URI` |
+| La API no puede conectar con Neo4j | Revisa `docker compose ps` y `docker compose logs --tail 50 api neo4j`; comprueba las credenciales |
+| Respuesta 401 | Envía la clave configurada en `API_KEY` mediante `X-API-Key` o **Authorize** en Swagger |
+| Respuesta 422 | Revisa los campos, modalidades y valores indicados en el error; no se admiten campos extra |
+| Ranking vacío | Comprueba habilidades compartidas y `minScore`; usa diagnóstico directo para analizar un par excluido |
+| Cambié la contraseña pero no puedo entrar | El volumen conserva la base existente; cambiar `.env` no cambia la contraseña guardada en Neo4j |
 
 ## Límites y seguridad
 
