@@ -57,3 +57,27 @@ class JobRepository:
                 "<-[:REQUIRES_SKILL|DESIRES_SKILL]-(j:Job) WITH DISTINCT j RETURN " +
                 JOB_PROJECTION + " AS data", id=candidate_id)))
         return [job_from_record(r["data"]) for r in records]
+
+
+    def search(self, query: str, location: str, work_mode: str,
+               limit: int, offset: int) -> tuple[int, list[Job]]:
+        params = dict(term=key(query), location=key(location), mode=work_mode,
+                      limit=limit, offset=offset)
+        predicate = """MATCH (j:Job)
+        WHERE ($term = '' OR toLower(j.title) CONTAINS $term
+          OR toLower(coalesce(j.description, '')) CONTAINS $term
+          OR EXISTS { MATCH (co:Company)-[:POSTED]->(j) WHERE co.key CONTAINS $term })
+        AND ($location = '' OR EXISTS {
+          MATCH (j)-[:LOCATED_IN]->(l:Location) WHERE l.key = $location })
+        AND ($mode = '' OR EXISTS {
+          MATCH (j)-[:OFFERS_MODE]->(m:WorkMode) WHERE m.name = $mode })
+        """
+
+        def read(tx: ManagedTransaction) -> tuple[int, list[Job]]:
+            total = tx.run(predicate + "RETURN count(j) AS total", **params).single(strict=True)["total"]
+            records = tx.run(predicate + "WITH j ORDER BY j.id SKIP $offset LIMIT $limit RETURN "
+                             + JOB_PROJECTION + " AS data", **params)
+            return total, [job_from_record(record["data"]) for record in records]
+
+        with self.driver.session() as session:
+            return session.execute_read(read)

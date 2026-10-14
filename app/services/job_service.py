@@ -15,3 +15,8 @@ class JobService:
 
     def upsert(self, job: Job) -> tuple[Job, bool]:
         return self.repository.upsert(job)
+
+
+    def search(self, query: str, location: str, work_mode: str,
+               limit: int, offset: int) -> tuple[int, list[Job]]:
+        return self.repository.search(query, location, work_mode, limit, offset)
