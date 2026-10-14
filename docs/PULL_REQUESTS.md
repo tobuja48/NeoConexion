@@ -43,7 +43,7 @@ Cada PR se basa en la rama anterior y contiene su incremento. **No se ha fusiona
 | 37 | [#61](https://github.com/tobuja48/NeoConexion/pull/61) | Contenerizar la API con usuario no root y espera de Neo4j | `rebuild/37-api-container` | Infraestructura/documentación |
 | 38 | [#62](https://github.com/tobuja48/NeoConexion/pull/62) | Documentar recorrido reproducible con solicitudes curl | `rebuild/38-http-examples` | #1, #4, #8 |
 | 39 | [#63](https://github.com/tobuja48/NeoConexion/pull/63) | Agregar guía técnica HTML con simulador de matching | `rebuild/39-html-manual` | Infraestructura/documentación |
-| 40 | [Ver PR de entrega](https://github.com/tobuja48/NeoConexion/pulls?q=is%3Apr+head%3Arebuild%2F40-delivery-guide) | Documentar ejecución, pruebas y trazabilidad de historias | `rebuild/40-delivery-guide` | Infraestructura/documentación |
+| 40 | [#64](https://github.com/tobuja48/NeoConexion/pull/64) | Documentar ejecución, pruebas y trazabilidad de historias | `rebuild/40-delivery-guide` | Infraestructura/documentación |
 
 ## Cómo revisar e integrar
 

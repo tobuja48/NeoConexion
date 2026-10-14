@@ -19,6 +19,7 @@ Comando: `docker compose -p neoconexion-rebuild exec -T api python -m pytest -q 
 - API y Neo4j arrancaron saludables con `docker compose up -d --build --wait`.
 - Contenedor API ejecuta UID 10001; puertos de verificación 18000/17474/17687.
 - `requests.sh` ejecutó altas, consultas, rankings, búsqueda y diagnóstico contra la API real.
+- Manual renderizado en Edge: escritorio y móvil, sin errores JavaScript ni desbordamiento horizontal; controles y simulador comprobados.
 - El manual HTML tiene anclas válidas y documenta las nuevas rutas comprobadas en OpenAPI.
 - Todos los módulos Python de app y tests están versionados; `.env` está excluido.
 - Cada incremento pasó sus verificaciones antes del push. Los resultados están en las descripciones de los PRs.
