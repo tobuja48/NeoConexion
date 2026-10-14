@@ -3,6 +3,7 @@ from collections.abc import Callable
 from app.domain.matching.engine import score
 from app.domain.matching.models import Candidate, Job, MatchResult
 from app.domain.matching.weights import Weights
+from app.domain.matching.normalization import key
 from app.services.candidate_service import CandidateService
 from app.services.job_service import JobService
 
@@ -35,3 +36,11 @@ class MatchingService:
         eligible = [pair for pair in pairs if pair[1].match_score >= min_score]
         eligible.sort(key=lambda pair: (-pair[1].match_score, pair[0].id))
         return len(eligible), eligible[:limit]
+
+
+    def diagnose(self, candidate_id: str, job_id: str) -> tuple[MatchResult, bool]:
+        candidate = self.candidates.get(candidate_id)
+        job = self.jobs.get(job_id)
+        owned = {key(skill) for skill in candidate.skills}
+        requested = {key(skill) for skill in (*job.required_skills, *job.desired_skills)}
+        return self.scorer(candidate, job, self.weights), bool(owned & requested)
