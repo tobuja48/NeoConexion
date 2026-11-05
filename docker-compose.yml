@@ -9,6 +9,7 @@ services:
       NEO4J_PASSWORD: "${NEO4J_PASSWORD:?Set NEO4J_PASSWORD}"
       API_KEY: "${API_KEY:-}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      CORS_ORIGINS: "${CORS_ORIGINS:-}"
     depends_on:
       neo4j:
         condition: service_healthy

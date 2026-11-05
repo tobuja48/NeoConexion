@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from app.core.neo4j_driver import close_driver, get_driver
@@ -33,6 +34,24 @@ app = FastAPI(
 register_handlers(app)
 install_request_logging(app)
 app.include_router(router)
+
+
+def install_cors(app: FastAPI, origins: list[str]) -> None:
+    """Permite que frontends de navegador consuman la API. Se añade al final para quedar
+    como middleware más externo y que también los errores lleven cabeceras CORS."""
+    if not origins:
+        return
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type", "X-API-Key"],
+        expose_headers=["X-Request-ID"],
+        max_age=600,
+    )
+
+
+install_cors(app, get_settings().cors_origin_list)
 
 
 @app.get("/health", tags=["Health"], response_model=HealthResponse,
