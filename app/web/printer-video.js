@@ -3,14 +3,15 @@
   const el=id=>document.getElementById(id),video=el('printerVideo'),stage=el('printerStage');
   const pause=el('printerPause'),replay=el('printerReplay'),status=el('printerMediaStatus');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
-  const files={entrada:'entrada.mp4',espera:'espera.mp4',salida:'salida.mp4'};
+  const files={preview:'espera.mp4',entrada:'entrada.mp4',espera:'espera.mp4',salida:'salida.mp4'};
+  video.muted=true;video.defaultMuted=true;
   let entry=null,identity=null,phase='idle',generation=0,userPaused=false,manualMotion=false;
   const animate=()=>!reduced.matches||manualMotion;
   function label(){
     stage.dataset.phase=phase;stage.dataset.motion=animate()?'normal':'reduced';
     el('printerError').hidden=phase!=='error';
     const done=entry?.state==='success';
-    el('printerPhase').textContent=phase==='idle'?'Esperando una solicitud real':phase==='error'?`Error${entry?.status?' HTTP '+entry.status:''} · sin impresión de éxito`:
+    el('printerPhase').textContent=phase==='preview'?'Video automático · esperando actividad real de la API':phase==='idle'?'Esperando una solicitud real':phase==='error'?`Error${entry?.status?' HTTP '+entry.status:''} · sin impresión de éxito`:
       phase==='entrada'?(done?`Entrada · HTTP ${entry.status} ya confirmado; representación visual`:'Entrada del JSON · solicitud real observada'):
       phase==='espera'?'Esperando la respuesta real de NeoConexión':phase==='salida'?`HTTP ${entry.status} confirmado · imprimiendo salida`:`Documento confirmado · HTTP ${entry.status}`;
     pause.disabled=phase==='idle'||phase==='error'||phase==='complete';
@@ -18,10 +19,11 @@
     replay.disabled=!done;
   }
   function stop(next){
-    generation++;phase=next;video.onloadedmetadata=null;video.pause();video.removeAttribute('src');video.load();label();
+    generation++;phase=next;video.onloadedmetadata=null;video.autoplay=false;video.pause();video.removeAttribute('src');video.load();label();
   }
   function clip(next,{freezeEnd=false}={}){
-    const token=++generation;phase=next;video.pause();video.loop=next==='espera';
+    const token=++generation;phase=next;video.pause();video.loop=next==='espera'||next==='preview';
+    video.autoplay=animate()&&!userPaused;
     const url=new URL('./media/'+files[next],location.href).href;
     video.onloadedmetadata=()=>{
       if(token!==generation||video.currentSrc!==url)return;
@@ -34,12 +36,17 @@
       }
       label();
     };
-    status.textContent=animate()?'Representación visual de una operación real · los JSON no se generan en el video.':'Movimiento reducido · fotograma estático y respuesta HTTP real.';
+    status.textContent=!animate()?'Movimiento reducido · fotograma estático.':next==='preview'?'Bucle visual automático · no genera solicitudes ni resultados.':'Representación visual de una operación real · los JSON no se generan en el video.';
     video.src=url;video.load();label();
   }
   function sync(current){
     entry=current;
-    if(!entry||entry.state==='draft'){if(phase!=='idle')stop('idle');return;}
+    if(!entry||entry.state==='draft'){
+      if(phase!=='preview')clip('preview');
+      else if(!animate()){video.autoplay=false;video.pause();label();}
+      else if(!userPaused&&video.paused){video.autoplay=true;video.play().then(label).catch(()=>{status.textContent='Pulsa Reproducir video para habilitar la reproducción.';label();});}
+      return;
+    }
     if(entry.id!==identity){
       identity=entry.id;
       if(entry.state==='error'){stop('error');return;}
@@ -67,5 +74,5 @@
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden)video.pause();else if(animate()&&!userPaused&&!['idle','error','complete'].includes(phase))video.play().catch(()=>{});
   });
-  window.PrinterVideo={sync};label();
+  window.PrinterVideo={sync};sync(null);
 })();

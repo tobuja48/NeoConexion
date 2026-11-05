@@ -26,6 +26,8 @@ Se reemplazaron los engranajes por tres clips locales, sin dependencias externas
 
 Al seleccionar una solicitud, se reproduce la entrada. Si sigue pendiente al acabar ese clip, se repite la espera. Cuando está confirmada como exitosa, se reproduce la salida y se conserva su último fotograma. Si la respuesta ya llegó antes de acabar la entrada, se pasa directamente a salida. Ante un error se detiene el video y se muestra el aviso, sin imprimir una salida verde.
 
+Al abrir el visor sin solicitudes, el clip de espera comienza automáticamente, en silencio y en bucle, rotulado como video automático en espera de actividad real. No crea solicitudes ni JSON de salida. Se puede pausar; la preferencia de movimiento reducido detiene también este bucle. En cuanto se observa una solicitud se aplica el recorrido real descrito arriba.
+
 El video es una representación visual: no retrasa, genera ni modifica las respuestas de la API. Los JSON y el código HTTP se muestran en sus paneles reales, aunque el clip todavía esté terminando. La duración del clip no representa la duración del servidor. Pausar o repetir solo controla el video y no reenvía solicitudes. Movimiento reducido utiliza fotogramas estáticos. Si el navegador no reproduce el video, los JSON y el estado HTTP siguen disponibles.
 
 ### Registro de solicitudes

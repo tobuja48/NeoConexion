@@ -11,7 +11,7 @@
       <span class="machine-summary" id="machineCount">Sin solicitudes</span></summary>
       <p class="machine-intro">Aquí verás <strong>el JSON que recibe la API y su respuesta real</strong>. La impresora representa la entrada, la espera y la salida confirmada.</p>
       <div class="printer-stage" id="printerStage" data-phase="idle">
-        <video id="printerVideo" muted playsinline preload="auto" poster="./media/impresora.png" aria-label="Impresora NeoConexión: entrada, procesamiento y salida del JSON"></video>
+        <video id="printerVideo" autoplay muted playsinline preload="auto" poster="./media/impresora.png" aria-label="Impresora NeoConexión: entrada, procesamiento y salida del JSON"></video>
         <div class="printer-caption"><strong id="printerPhase" role="status" aria-live="polite">Esperando una solicitud real</strong><small id="machineRoute">Sin solicitud seleccionada</small></div>
         <div class="printer-error" id="printerError" hidden>La API no confirmó un resultado exitoso. No se imprime una salida verde.</div>
       </div>
