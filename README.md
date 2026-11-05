@@ -31,6 +31,7 @@ No sobrescribas `.env` en arranques posteriores. Compose no necesita Python inst
 
 | Recurso | Dirección predeterminada |
 | --- | --- |
+| Conecta Empleos y máquina JSON en vivo | http://localhost:8000/app/ |
 | Swagger | http://localhost:8000/docs |
 | OpenAPI | http://localhost:8000/openapi.json |
 | Salud del proceso / base | http://localhost:8000/health · http://localhost:8000/health/db |
@@ -48,6 +49,16 @@ docker compose stop
 ```
 
 ## Desarrollo y pruebas
+
+### App y máquina JSON
+
+Abre `/app/` en el mismo servidor de la API. Conecta Empleos construye los JSON de los formularios y llama a NeoConexión por HTTP. La máquina muestra entrada, espera, respuesta, código HTTP, duración y X-Request-ID. El JSON de salida solo aparece después de recibir la respuesta del servidor; el guardado local solo se confirma después de un HTTP exitoso.
+
+En **Conectar / sincronizar API** puedes probar la conexión y enviar los ejemplos. La sincronización informa los registros confirmados y los fallidos. **Mi perfil** guarda candidatos y **Publicar vacante** guarda ofertas. Los rankings y diagnósticos usan el motor Python real. Empresas, postulaciones, invitaciones y sesiones de demostración permanecen en el navegador. No se envían datos de ejemplo automáticamente.
+
+Consulta [la guía de Conecta Empleos](docs/CONECTA_EMPLEOS.md) para seguir la demostración y ejecutar las pruebas del navegador. No se necesita npm para utilizar la app: sus archivos se sirven desde FastAPI y se incluyen en la imagen Docker.
+
+### Backend local
 
 ```powershell
 py -3.13 -m venv .venv

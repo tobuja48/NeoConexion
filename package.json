@@ -1,0 +1,10 @@
+{
+  "name": "neoconexion-browser-tests",
+  "private": true,
+  "scripts": {
+    "test:browser": "node tests/browser/conecta.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

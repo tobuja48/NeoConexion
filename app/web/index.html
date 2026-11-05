@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>img{max-width:100%}[hidden]{display:none!important}body{margin:0}</style>
+<title>Conecta Empleos · NeoConexión en vivo</title>
+<link rel="stylesheet" href="./machine.css">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: classic job board — sticky header, search band, list + detail pages, company workspace */
+:root{
+  --bg:#F4F6F8; --surface:#FFFFFF; --sunken:#EBEFF3; --fg:#17222D; --muted:#5D6B78; --line:#D9E0E6;
+  --brand:#124E78; --brand-soft:#DCE9F3; --brand-fg:#FFFFFF; --sun:#F2B134; --sun-soft:#FCEFD2; --sun-fg:#5A3D00;
+  --good:#23794A; --good-soft:#DCF0E3; --warn:#9A5B06; --warn-soft:#F8E9D2; --bad:#B13A3A; --bad-soft:#F7E0E0;
+  --display:"Sora", "Source Sans 3", system-ui, sans-serif;
+  --body:"Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F161D; --surface:#16202A; --sunken:#1E2A36; --fg:#E5ECF2; --muted:#98A7B5; --line:#2A3846;
+  --brand:#6FB0E0; --brand-soft:#17324A; --brand-fg:#08141E; --sun:#F2B134; --sun-soft:#3A2D12; --sun-fg:#F7D58A;
+  --good:#6BC892; --good-soft:#173324; --warn:#E4A855; --warn-soft:#382912; --bad:#E77D7D; --bad-soft:#3A1D1D; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0F161D; --surface:#16202A; --sunken:#1E2A36; --fg:#E5ECF2; --muted:#98A7B5; --line:#2A3846;
+  --brand:#6FB0E0; --brand-soft:#17324A; --brand-fg:#08141E; --sun:#F2B134; --sun-soft:#3A2D12; --sun-fg:#F7D58A;
+  --good:#6BC892; --good-soft:#173324; --warn:#E4A855; --warn-soft:#382912; --bad:#E77D7D; --bad-soft:#3A1D1D; color-scheme:dark;}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.inner{max-width:1180px;margin:0 auto}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.small{font-size:14px}
+
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-block:10px}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:19px;cursor:pointer;border:0;background:none;padding:0}
+.logo i{width:28px;height:28px;border-radius:8px;background:var(--brand);display:grid;place-items:center;color:var(--brand-fg);font-style:normal;font-size:15px}
+nav.main{display:flex;gap:2px;margin-right:auto;flex-wrap:wrap}
+nav.main button{border:0;background:none;padding:7px 11px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:600}
+nav.main button:hover{color:var(--fg);background:var(--sunken)}
+nav.main button.on{color:var(--brand);background:var(--brand-soft)}
+.session{display:flex;align-items:center;gap:8px}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex:none}
+.session select{width:auto;max-width:220px;padding:6px 8px}
+
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;min-width:0}
+textarea{resize:vertical;min-height:110px}
+.btn{border:1px solid var(--line);background:var(--surface);padding:9px 16px;border-radius:8px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{background:var(--sunken)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-fg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.sun{background:var(--sun);border-color:var(--sun);color:#3A2700}
+.btn.sm{padding:5px 11px;font-size:14px}
+.btn[disabled]{opacity:.55;cursor:default}
+.link{border:0;background:none;color:var(--brand);cursor:pointer;padding:0;font-weight:600}
+.link:hover{text-decoration:underline}
+
+.hero{background:var(--brand);color:var(--brand-fg)}
+.hero .inner{padding-block:28px 26px;display:flex;flex-direction:column;gap:14px}
+.hero h1{font-size:clamp(24px,3.2vw,32px)}
+.hero p{margin:0;opacity:.85}
+.search{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:8px;background:var(--surface);padding:8px;border-radius:12px}
+@media (max-width:760px){.search{grid-template-columns:minmax(0,1fr)}}
+.search input,.search select{border-color:transparent;background:var(--bg)}
+
+.page{padding-block:24px 48px;display:flex;flex-direction:column;gap:22px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:22px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:14px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.head-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.head-row h2{font-size:20px;margin-right:auto}
+.head-row select{width:auto}
+
+.jobcard{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;cursor:pointer;text-align:left;width:100%}
+.jobcard:hover{border-color:var(--brand)}
+.logo-co{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;color:#fff;font-family:var(--display);font-weight:700;font-size:17px}
+.jobcard h3{font-size:17px}
+.jobcard .co{color:var(--muted);font-size:14.5px;margin-top:2px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:14px;color:var(--muted);margin-top:8px}
+.meta b{color:var(--fg);font-weight:600}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;text-align:right}
+@media (max-width:600px){.jobcard{grid-template-columns:40px minmax(0,1fr)}.logo-co{width:40px;height:40px;font-size:15px}.side{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center}}
+.ago{font-size:13px;color:var(--muted)}
+.match{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13.5px;padding:3px 10px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.match.hi{background:var(--good-soft);color:var(--good)} .match.mid{background:var(--brand-soft);color:var(--brand)} .match.lo{background:var(--sunken);color:var(--muted)}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:13px;padding:2px 10px;border-radius:999px;background:var(--sunken);white-space:nowrap}
+.tag.ok{background:var(--good-soft);color:var(--good)} .tag.miss{background:var(--warn-soft);color:var(--warn)}
+.status{font-size:12.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--brand-soft);color:var(--brand)}
+.status.applied{background:var(--good-soft);color:var(--good)}
+
+.recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+.rec{background:var(--sun-soft);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:6px;cursor:pointer;border:1px solid transparent;text-align:left}
+.rec:hover{border-color:var(--sun)}
+.rec h4{font-size:15.5px}
+.rec .why{font-size:13.5px;color:var(--sun-fg)}
+.section-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.section-title h2{font-size:19px}
+
+.detail h1{font-size:clamp(22px,3vw,28px)}
+.detail .desc{white-space:pre-line;max-width:70ch}
+.fit{display:flex;flex-direction:column;gap:12px}
+.fit-score{display:flex;align-items:center;gap:14px}
+.ring{width:72px;height:72px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--sunken) 0);display:grid;place-items:center;position:relative;flex:none}
+.ring::after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--surface)}
+.ring span{position:relative;z-index:1;font-family:var(--display);font-weight:700;font-size:18px}
+.fit ul{margin:0;padding-left:18px;font-size:14.5px;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.facts div{display:flex;flex-direction:column}
+.facts span{font-size:13px;color:var(--muted)}
+.facts b{font-weight:600}
+
+.form{display:flex;flex-direction:column;gap:14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{font-size:14px;font-weight:600}
+.field .hint{font-size:13px;color:var(--muted)}
+.notice{border-radius:8px;padding:10px 12px;font-size:14.5px}
+.notice.ok{background:var(--good-soft);color:var(--good)} .notice.err{background:var(--bad-soft);color:var(--bad)} .notice.info{background:var(--brand-soft);color:var(--brand)}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tabs button{border:0;background:none;padding:9px 14px;cursor:pointer;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--brand);border-bottom-color:var(--brand)}
+.person{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line)}
+.person:last-child{border-bottom:0}
+.person h4{font-size:16px}
+@media (max-width:600px){.person{grid-template-columns:44px minmax(0,1fr)}.person .side{grid-column:1/-1}}
+.table{width:100%;border-collapse:collapse;font-size:15px}
+.table th{text-align:left;font-size:13px;color:var(--muted);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+.table td{padding:12px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.table tr:last-child td{border-bottom:0}
+.tablewrap{overflow-x:auto}
+.empty{padding:26px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+footer{border-top:1px solid var(--line);background:var(--surface)}
+footer .inner{padding-block:18px;display:flex;gap:12px 22px;flex-wrap:wrap;font-size:14px;color:var(--muted);align-items:center}
+footer .inner span:first-child{margin-right:auto}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:15px;z-index:20;max-width:calc(100vw - 32px)}
+.powered{font-size:12.5px;color:var(--muted)}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in wrap inner">
+    <button class="logo" id="home" aria-label="Inicio"><i>C</i>Conecta Empleos</button>
+    <nav class="main" id="nav"></nav>
+    <div class="session">
+      <span class="avatar" id="sessAvatar" aria-hidden="true"></span>
+      <label class="small muted" for="sess">Sesión</label>
+      <select id="sess"></select>
+    </div>
+  </div>
+</header>
+
+<div id="app"></div>
+
+<footer class="wrap"><div class="inner">
+  <span>Conecta Empleos · datos locales de prueba · matching por API real</span>
+  <button class="link" id="goIntegration">Conectar / sincronizar API</button>
+  <button class="link" id="resetAll">Restaurar datos</button>
+</div></footer>
+
+<script src="./machine.js"></script>
+<script>
+(() => {
+/* Cliente HTTP real; todas las solicitudes alimentan la máquina visual. */
+const CONFIG_KEY = "conecta-neoconexion-config";
+const DEFAULT_URL = location.protocol === "http:" || location.protocol === "https:" ? location.origin : "http://127.0.0.1:18000";
+const NeoConexion = {
+  config: (() => {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; } catch {}
+    const c = { mode: "http", baseUrl: saved.mode === "http" ? saved.baseUrl || DEFAULT_URL : DEFAULT_URL, apiKey: "" };
+    try {
+      c.apiKey = sessionStorage.getItem("conecta-api-key") || saved.apiKey || "";
+      sessionStorage.setItem("conecta-api-key", c.apiKey);
+      localStorage.setItem(CONFIG_KEY, JSON.stringify({mode: "http", baseUrl: c.baseUrl}));
+    } catch {}
+    return c;
+  })(),
+  saveConfig(c) {
+    const url = new URL(c.baseUrl);
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
+      throw new Error("Introduce solo el origen de la API, por ejemplo http://127.0.0.1:18000, sin /api/v1 ni /docs.");
+    }
+    this.config = {mode: "http", baseUrl: url.origin, apiKey: c.apiKey};
+    try {
+      localStorage.setItem(CONFIG_KEY, JSON.stringify({mode: "http", baseUrl: url.origin}));
+      sessionStorage.setItem("conecta-api-key", c.apiKey);
+    } catch {}
+  },
+  async request(method, path, body) {
+    const entry = JsonMachine.start(method, path, body);
+    const headers = { "Accept": "application/json" };
+    if (body !== undefined) headers["Content-Type"] = "application/json";
+    if (this.config.apiKey) headers["X-API-Key"] = this.config.apiKey;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
+    try {
+      const res = await fetch(this.config.baseUrl.replace(/\/$/, "") + path,
+        { method, headers, signal: controller.signal, body: body === undefined ? undefined : JSON.stringify(body) });
+      const raw = await res.text();
+      let parsed, isJson = true;
+      try { parsed = JSON.parse(raw); } catch { isJson = false; }
+      JsonMachine.finish(entry, res, parsed, raw, isJson);
+      return isJson ? { status: res.status, body: parsed } : {status: 502, body: {error: {message: "La respuesta del servidor no contiene JSON válido."}}};
+    } catch (error) {
+      JsonMachine.fail(entry, error);
+      return {status: 0, body: {error: {message: error.name === "AbortError" ?
+        "Se agotó el tiempo de espera. No se recibió confirmación; comprueba el registro antes de reenviar." :
+        "No se pudo conectar con la API. Revisa la conexión y CORS. No se recibió confirmación del guardado."}}};
+    } finally { clearTimeout(timeout); }
+  },
+  health() { return this.request("GET", "/health/db"); },
+  upsertCandidate(c) { return this.request("POST", "/api/v1/candidates", c); },
+  upsertJob(j) { return this.request("POST", "/api/v1/jobs", j); },
+  recommendationsFor(candidateId, limit = 50, minScore = 0) { return this.request("GET", `/api/v1/candidates/${encodeURIComponent(candidateId)}/recommendations?limit=${limit}&minScore=${minScore}`); },
+  candidatesFor(jobId, limit = 50, minScore = 0) { return this.request("GET", `/api/v1/jobs/${encodeURIComponent(jobId)}/candidates?limit=${limit}&minScore=${minScore}`); },
+  diagnosis(candidateId, jobId) { return this.request("GET", `/api/v1/candidates/${encodeURIComponent(candidateId)}/jobs/${encodeURIComponent(jobId)}/diagnosis`); }
+};
+const confirmed = r => r.status >= 200 && r.status < 300;
+const apiError = r => `${r.status ? "HTTP " + r.status + ": " : ""}${r.body?.error?.message || "La API no confirmó la operación."}`;
+
+/* Traductores: modelo de la plataforma → contrato de NeoConexión */
+const toApiCandidate = u => ({ id: u.id, name: u.name, location: u.city, yearsOfExperience: u.years, skills: u.skills, preferredWorkMode: u.workMode, expectedSalary: u.salary ?? null });
+const toApiJob = j => ({ id: j.id, company: P.company(j.companyId).name, title: j.title, description: j.description || null, location: j.city, workMode: j.workMode, requiredExperience: j.experience, requiredSkills: j.requiredSkills, desiredSkills: j.desiredSkills });
+
+/* =================================================================
+   CAPA 3 · DATOS PROPIOS DE LA PLATAFORMA
+   Empresas, vacantes (con salario y fecha), candidatos y postulaciones.
+   ================================================================= */
+const DATA_KEY = "conecta-empleos-v1";
+const day = 864e5, now = Date.now();
+const SEED = {
+  companies: [
+    { id: "co-1", name: "Andina Fintech", sector: "Servicios financieros", city: "Bogotá", color: "#2F6FB0" },
+    { id: "co-2", name: "Tienda Ceiba", sector: "Comercio electrónico", city: "Medellín", color: "#2E8B57" },
+    { id: "co-3", name: "Logística Caribe", sector: "Transporte y logística", city: "Barranquilla", color: "#C0632A" },
+    { id: "co-4", name: "Nube Pacífico", sector: "Tecnología", city: "Cali", color: "#5B4FB5" },
+    { id: "co-5", name: "Salud Integral IPS", sector: "Salud", city: "Bogotá", color: "#B3405A" },
+    { id: "co-6", name: "Educa Digital", sector: "Educación", city: "Medellín", color: "#B38A1F" },
+    { id: "co-7", name: "Café Origen", sector: "Agroindustria", city: "Manizales", color: "#7A4E2D" }
+  ],
+  jobs: [
+    { id: "j-101", companyId: "co-1", title: "Backend Developer Python", city: "Bogotá", workMode: "hybrid", experience: 3, requiredSkills: ["Python", "FastAPI", "PostgreSQL"], desiredSkills: ["Docker", "Neo4j"], salaryMin: 7000000, salaryMax: 9500000, contract: "Término indefinido", posted: 1, description: "Buscamos un desarrollador backend para construir las APIs de pagos y conciliación bancaria.\n\nResponsabilidades:\n• Diseñar y mantener servicios REST.\n• Modelar datos en PostgreSQL.\n• Participar en revisiones de código y despliegues." },
+    { id: "j-102", companyId: "co-2", title: "Desarrollador Frontend React", city: "Medellín", workMode: "remote", experience: 2, requiredSkills: ["JavaScript", "React", "CSS"], desiredSkills: ["TypeScript"], salaryMin: 5500000, salaryMax: 7500000, contract: "Término indefinido", posted: 2, description: "Únete al equipo que construye la tienda en línea y el panel de vendedores.\n\n• Componentes accesibles en React.\n• Trabajo con diseño y producto.\n• 100 % remoto desde Colombia." },
+    { id: "j-103", companyId: "co-3", title: "Data Engineer", city: "Barranquilla", workMode: "onsite", experience: 4, requiredSkills: ["Python", "SQL", "Airflow"], desiredSkills: ["Spark", "AWS"], salaryMin: 8000000, salaryMax: 11000000, contract: "Término indefinido", posted: 3, description: "Construirás los pipelines de datos que optimizan rutas y entregas en la región Caribe." },
+    { id: "j-104", companyId: "co-4", title: "Ingeniero DevOps", city: "Cali", workMode: "remote", experience: 3, requiredSkills: ["Docker", "Kubernetes", "AWS"], desiredSkills: ["Terraform", "Python"], salaryMin: 9000000, salaryMax: 12000000, contract: "Prestación de servicios", posted: 1, description: "Gestiona la infraestructura en la nube y los despliegues continuos de nuestros clientes." },
+    { id: "j-105", companyId: "co-5", title: "Analista de Datos Junior", city: "Bogotá", workMode: "onsite", experience: 1, requiredSkills: ["SQL", "Excel"], desiredSkills: ["Power BI", "Python"], salaryMin: 3200000, salaryMax: 4200000, contract: "Término fijo", posted: 5, description: "Apoyarás la construcción de reportes de indicadores asistenciales para la dirección médica." },
+    { id: "j-106", companyId: "co-6", title: "Desarrollador Full Stack", city: "Medellín", workMode: "hybrid", experience: 2, requiredSkills: ["JavaScript", "Node.js", "React"], desiredSkills: ["PostgreSQL", "Docker"], salaryMin: 6000000, salaryMax: 8000000, contract: "Término indefinido", posted: 4, description: "Desarrolla nuevas funciones para nuestra plataforma de cursos en línea." },
+    { id: "j-107", companyId: "co-4", title: "Ingeniero de Datos en Grafos", city: "Bogotá", workMode: "remote", experience: 2, requiredSkills: ["Neo4j", "Cypher", "Python"], desiredSkills: ["FastAPI"], salaryMin: 7500000, salaryMax: 9000000, contract: "Término indefinido", posted: 0, description: "Modela relaciones complejas entre clientes y servicios usando bases de datos de grafos." },
+    { id: "j-108", companyId: "co-1", title: "QA Automation", city: "Bogotá", workMode: "hybrid", experience: 2, requiredSkills: ["Python", "Selenium", "pytest"], desiredSkills: ["Docker"], salaryMin: 5000000, salaryMax: 6500000, contract: "Término indefinido", posted: 6, description: "Automatiza pruebas de servicios y de interfaz para nuestras aplicaciones financieras." },
+    { id: "j-109", companyId: "co-7", title: "Auxiliar Contable", city: "Manizales", workMode: "onsite", experience: 1, requiredSkills: ["Contabilidad", "Excel"], desiredSkills: ["Siigo"], salaryMin: 2000000, salaryMax: 2600000, contract: "Término fijo", posted: 2, description: "Registro de facturas, conciliaciones y apoyo en cierres mensuales." },
+    { id: "j-110", companyId: "co-2", title: "Ejecutivo Comercial B2B", city: "Medellín", workMode: "hybrid", experience: 2, requiredSkills: ["Ventas", "Negociación"], desiredSkills: ["CRM", "Excel"], salaryMin: 3000000, salaryMax: 4500000, contract: "Término indefinido", posted: 7, description: "Gestiona una cartera de marcas aliadas y abre nuevos clientes empresariales. Salario base más comisiones." },
+    { id: "j-111", companyId: "co-6", title: "Diseñador UX/UI", city: "Bogotá", workMode: "remote", experience: 2, requiredSkills: ["Figma", "Prototipado"], desiredSkills: ["Investigación de usuarios", "CSS"], salaryMin: 5000000, salaryMax: 7000000, contract: "Término indefinido", posted: 3, description: "Diseña experiencias de aprendizaje claras para estudiantes y docentes." }
+  ],
+  candidates: [
+    { id: "c-202", name: "Juan Pérez", email: "juan.perez@correo.co", headline: "Desarrollador backend", city: "Bogotá", years: 4, skills: ["Python", "FastAPI", "PostgreSQL", "Docker", "Neo4j"], workMode: "hybrid", salary: 9000000 },
+    { id: "c-201", name: "Ana Pérez", email: "ana.perez@correo.co", headline: "Desarrolladora Python", city: "Bogotá", years: 1.5, skills: ["Python", "Docker", "FastAPI", "PostgreSQL"], workMode: "remote", salary: 6500000 },
+    { id: "c-203", name: "Laura Gómez", email: "laura.gomez@correo.co", headline: "Frontend developer", city: "Medellín", years: 3, skills: ["JavaScript", "React", "TypeScript", "CSS", "Node.js"], workMode: "remote", salary: 7500000 },
+    { id: "c-204", name: "Carlos Ruiz", email: "carlos.ruiz@correo.co", headline: "Ingeniero de infraestructura", city: "Cali", years: 5, skills: ["Docker", "Kubernetes", "AWS", "Terraform", "Linux"], workMode: "any", salary: 11000000 },
+    { id: "c-205", name: "Valentina Ríos", email: "valentina.rios@correo.co", headline: "Analista de datos", city: "Barranquilla", years: 2, skills: ["SQL", "Python", "Excel", "Power BI"], workMode: "onsite", salary: 4500000 },
+    { id: "c-206", name: "Andrés Mejía", email: "andres.mejia@correo.co", headline: "Ingeniero de datos", city: "Bogotá", years: 3, skills: ["Neo4j", "Cypher", "Python", "Java"], workMode: "hybrid", salary: 8000000 },
+    { id: "c-207", name: "Sofía Herrera", email: "sofia.herrera@correo.co", headline: "Asesora comercial", city: "Medellín", years: 2.5, skills: ["Ventas", "Negociación", "Excel", "Servicio al cliente"], workMode: "any", salary: 3500000 },
+    { id: "c-208", name: "Mateo Castro", email: "mateo.castro@correo.co", headline: "Tester de software", city: "Bogotá", years: 2.5, skills: ["Python", "Selenium", "pytest", "SQL"], workMode: "onsite", salary: 6000000 },
+    { id: "c-209", name: "Daniela Ortiz", email: "daniela.ortiz@correo.co", headline: "Diseñadora de producto", city: "Bogotá", years: 3, skills: ["Figma", "Prototipado", "Investigación de usuarios"], workMode: "remote", salary: 6500000 },
+    { id: "c-210", name: "Camilo Arango", email: "camilo.arango@correo.co", headline: "Técnico contable", city: "Manizales", years: 1, skills: ["Contabilidad", "Excel", "Siigo"], workMode: "onsite", salary: 2200000 }
+  ],
+  applications: [
+    { id: "a-1", jobId: "j-101", candidateId: "c-201", at: 2, status: "En revisión" },
+    { id: "a-2", jobId: "j-101", candidateId: "c-208", at: 1, status: "Enviada" },
+    { id: "a-3", jobId: "j-102", candidateId: "c-203", at: 1, status: "Entrevista" },
+    { id: "a-4", jobId: "j-108", candidateId: "c-208", at: 4, status: "En revisión" },
+    { id: "a-5", jobId: "j-107", candidateId: "c-202", at: 0, status: "Enviada" }
+  ],
+  invites: []
+};
+function freshData() {
+  const d = JSON.parse(JSON.stringify(SEED));
+  d.jobs.forEach(j => j.postedAt = now - j.posted * day);
+  d.applications.forEach(a => a.at = now - a.at * day);
+  return d;
+}
+let D;
+try { D = JSON.parse(localStorage.getItem(DATA_KEY)); } catch (e) {}
+const saveData = () => { try { localStorage.setItem(DATA_KEY, JSON.stringify(D)); } catch (e) {} };
+const P = {
+  company: id => D.companies.find(c => c.id === id),
+  job: id => D.jobs.find(j => j.id === id),
+  cand: id => D.candidates.find(c => c.id === id),
+  appsForJob: id => D.applications.filter(a => a.jobId === id),
+  appsForCand: id => D.applications.filter(a => a.candidateId === id),
+  applied: (cid, jid) => D.applications.some(a => a.candidateId === cid && a.jobId === jid)
+};
+async function syncAll() {
+  const results = [];
+  for (const j of D.jobs) results.push(await NeoConexion.upsertJob(toApiJob(j)));
+  for (const c of D.candidates) results.push(await NeoConexion.upsertCandidate(toApiCandidate(c)));
+  return {total: results.length, ok: results.filter(confirmed).length,
+          errors: results.filter(r => !confirmed(r)).map(apiError)};
+}
+
+/* =================================================================
+   CAPA 4 · INTERFAZ
+   ================================================================= */
+const app = document.getElementById("app");
+const MODE = { remote: "Remoto", hybrid: "Híbrido", onsite: "Presencial", any: "Cualquiera" };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const cop = n => "$" + Math.round(n / 1e5) / 10 + " M";
+const salary = j => `${cop(j.salaryMin)} – ${cop(j.salaryMax)}`;
+const ago = t => { const d = Math.floor((now - t) / day); return d <= 0 ? "Publicada hoy" : d === 1 ? "Hace 1 día" : `Hace ${d} días`; };
+const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+const colorFor = id => ["#2F6FB0", "#2E8B57", "#C0632A", "#5B4FB5", "#B3405A", "#B38A1F", "#3A8C9C"][[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % 7];
+const matchCls = s => s >= 80 ? "hi" : s >= 60 ? "mid" : "lo";
+const matchPill = s => `<span class="match ${matchCls(s)}">${Number(s).toFixed(1)} / 100</span>`;
+const ringColor = s => s >= 80 ? "var(--good)" : s >= 60 ? "var(--brand)" : "var(--warn)";
+let toastT;
+function toast(m) { let t = document.querySelector(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); } t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
+
+/* sesión simulada */
+const SESSION_KEY = "conecta-session";
+let session = (() => { try { return localStorage.getItem(SESSION_KEY) || "cand:c-202"; } catch (e) { return "cand:c-202"; } })();
+const me = () => { const [t, id] = session.split(":"); return t === "cand" ? { type: "cand", user: P.cand(id) } : t === "co" ? { type: "co", user: P.company(id) } : { type: "guest" }; };
+function renderSession() {
+  const sel = document.getElementById("sess");
+  sel.innerHTML = `<option value="guest">Visitante</option>
+    <optgroup label="Candidatos">${D.candidates.map(c => `<option value="cand:${c.id}">${esc(c.name)}</option>`).join("")}</optgroup>
+    <optgroup label="Empresas">${D.companies.map(c => `<option value="co:${c.id}">${esc(c.name)}</option>`).join("")}</optgroup>`;
+  if (![...sel.options].some(o => o.value === session)) session = "guest";
+  sel.value = session;
+  const m = me(), av = document.getElementById("sessAvatar");
+  av.textContent = m.type === "guest" ? "?" : initials(m.user.name);
+  av.style.background = m.type === "co" ? m.user.color : m.type === "cand" ? colorFor(m.user.id) : "var(--muted)";
+  const nav = m.type === "co" ? [["empleos", "Empleos"], ["empresa", "Mis vacantes"], ["publicar", "Publicar vacante"]]
+    : m.type === "cand" ? [["empleos", "Empleos"], ["postulaciones", "Mis postulaciones"], ["perfil", "Mi perfil"]] : [["empleos", "Empleos"]];
+  document.getElementById("nav").innerHTML = nav.map(([v, l]) => `<button data-go="${v}" class="${route.view === v ? "on" : ""}">${l}</button>`).join("");
+}
+document.getElementById("sess").onchange = e => { session = e.target.value; try { localStorage.setItem(SESSION_KEY, session); } catch (x) {} go(me().type === "co" ? "empresa" : "empleos"); };
+document.addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go, b.dataset.id); });
+document.getElementById("home").onclick = () => go("empleos");
+document.getElementById("goIntegration").onclick = () => go("integracion");
+document.getElementById("resetAll").onclick = () => {
+  if (!confirm("¿Restaurar los ejemplos locales? Esto no borra ni restaura registros de Neo4j.")) return;
+  D = freshData(); saveData(); session = "cand:c-202"; go("empleos"); toast("Ejemplos locales restaurados. Puedes sincronizarlos desde Integración.");
+};
+
+let route = { view: "empleos", id: null };
+const filters = { q: "", city: "", mode: "", sort: "recent" };
+function go(view, id = null) { route = { view, id }; renderSession(); VIEWS[view](); window.scrollTo({ top: 0 }); }
+
+/* ---------- Empleos ---------- */
+function jobCard(j, score, cid) {
+  const co = P.company(j.companyId);
+  return `<button class="jobcard" data-go="vacante" data-id="${j.id}">
+    <span class="logo-co" style="background:${co.color}">${initials(co.name)}</span>
+    <span style="min-width:0;display:block"><h3>${esc(j.title)}</h3><div class="co">${esc(co.name)}</div>
+      <span class="meta"><span>📍 <b>${esc(j.city)}</b></span><span>${MODE[j.workMode]}</span><span><b>${salary(j)}</b></span><span>${esc(j.contract)}</span></span></span>
+    <span class="side">${score != null ? matchPill(score) : ""}${cid && P.applied(cid, j.id) ? `<span class="status applied">Postulado</span>` : ""}<span class="ago">${ago(j.postedAt)}</span></span>
+  </button>`;
+}
+async function viewEmpleos() {
+  const m = me();
+  let scores = {}, recs = [], apiDown = false;
+  if (m.type === "cand") {
+    const r = await NeoConexion.recommendationsFor(m.user.id, 50, 0);
+    if (r.status === 200) { recs = r.body.recommendations; recs.forEach(x => scores[x.jobId] = x.matchScore); } else apiDown = true;
+  }
+  if(route.view !== "empleos") return;
+  const cities = [...new Set(D.jobs.map(j => j.city))].sort();
+  const t = filters.q.toLowerCase();
+  let list = D.jobs.filter(j => !t || [j.title, j.description, P.company(j.companyId).name, ...j.requiredSkills].join(" ").toLowerCase().includes(t))
+    .filter(j => !filters.city || j.city === filters.city).filter(j => !filters.mode || j.workMode === filters.mode);
+  list.sort(filters.sort === "match" ? (a, b) => (scores[b.id] ?? -1) - (scores[a.id] ?? -1) : (a, b) => b.postedAt - a.postedAt);
+  const top = recs.filter(r => r.matchScore >= 60).slice(0, 3);
+  app.innerHTML = `
+  <section class="hero wrap"><div class="inner">
+    <h1>${m.type === "cand" ? `Hola, ${esc(m.user.name.split(" ")[0])}. Estas son tus oportunidades.` : "Encuentra tu próximo empleo"}</h1>
+    <p>${D.jobs.length} vacantes activas en Colombia</p>
+    <form class="search" id="sf">
+      <input id="fq" placeholder="Cargo, empresa o habilidad" value="${esc(filters.q)}" aria-label="Buscar">
+      <select id="fc" aria-label="Ciudad"><option value="">Todas las ciudades</option>${cities.map(c => `<option${c === filters.city ? " selected" : ""}>${esc(c)}</option>`).join("")}</select>
+      <select id="fm" aria-label="Modalidad"><option value="">Cualquier modalidad</option>${["remote", "hybrid", "onsite"].map(x => `<option value="${x}"${x === filters.mode ? " selected" : ""}>${MODE[x]}</option>`).join("")}</select>
+      <button class="btn sun" type="submit">Buscar</button>
+    </form>
+  </div></section>
+  <div class="page wrap"><div class="inner col" style="gap:22px">
+    ${apiDown ? `<div class="notice err">No se obtuvo compatibilidad de la API. Si es tu primera visita, usa «Conectar / sincronizar API» para enviar los ejemplos. Puedes seguir explorando los datos locales.</div>` : ""}
+    ${top.length ? `<section class="col"><div class="section-title"><h2>Recomendadas para ti</h2><span class="powered">según tu perfil · motor NeoConexión</span></div>
+      <div class="recs">${top.map(r => { const j = P.job(r.jobId); return j ? `<button class="rec" data-go="vacante" data-id="${j.id}">${matchPill(r.matchScore)}<h4>${esc(j.title)}</h4><span class="small muted">${esc(P.company(j.companyId).name)} · ${esc(j.city)}</span><span class="why">Tienes ${r.matchingSkills.slice(0, 3).map(esc).join(", ")}</span></button>` : ""; }).join("")}</div></section>` : ""}
+    <section class="col">
+      <div class="head-row"><h2>${list.length} ${list.length === 1 ? "vacante" : "vacantes"}</h2>
+        ${m.type === "cand" ? `<label class="small muted" for="fs">Ordenar por</label><select id="fs"><option value="recent">Más recientes</option><option value="match"${filters.sort === "match" ? " selected" : ""}>Mayor compatibilidad</option></select>` : ""}</div>
+      ${list.map(j => jobCard(j, m.type === "cand" ? scores[j.id] ?? null : null, m.type === "cand" ? m.user.id : null)).join("") || `<div class="empty">No encontramos vacantes con esos filtros.</div>`}
+    </section>
+  </div></div>`;
+  document.getElementById("sf").onsubmit = e => { e.preventDefault(); filters.q = fq.value.trim(); filters.city = fc.value; filters.mode = fm.value; viewEmpleos(); };
+  const fs = document.getElementById("fs"); if (fs) fs.onchange = () => { filters.sort = fs.value; viewEmpleos(); };
+}
+
+/* ---------- Detalle de vacante ---------- */
+async function viewVacante() {
+  const j = P.job(route.id); if (!j) return go("empleos");
+  const co = P.company(j.companyId), m = me();
+  let fit = "";
+  if (m.type === "cand") {
+    const r = await NeoConexion.diagnosis(m.user.id, j.id);
+    const applied = P.applied(m.user.id, j.id);
+    if (r.status === 200) {
+      const d = r.body;
+      fit = `<div class="card fit">
+        <div class="fit-score"><div class="ring" style="--p:${d.matchScore};--c:${ringColor(d.matchScore)}"><span>${Number(d.matchScore).toFixed(1)}</span></div>
+          <div><h3 style="font-size:17px">Tu compatibilidad</h3><span class="small muted">${d.matchScore >= 80 ? "Tu perfil encaja muy bien" : d.matchScore >= 60 ? "Buen encaje con algunos vacíos" : "Encaje parcial"}</span></div></div>
+        ${d.matchingSkills.length ? `<div><div class="small" style="font-weight:600;margin-bottom:6px">Lo que ya tienes</div><div class="tagrow">${d.matchingSkills.map(s => `<span class="tag ok">✓ ${esc(s)}</span>`).join("")}</div></div>` : ""}
+        ${d.missingSkills.length ? `<div><div class="small" style="font-weight:600;margin-bottom:6px">Te falta</div><div class="tagrow">${d.missingSkills.map(s => `<span class="tag miss">${esc(s)}</span>`).join("")}</div></div>` : ""}
+        <ul>${d.explanations.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        <span class="powered">Calculado por NeoConexión</span>
+      </div>`;
+    }
+    fit = `<div class="card col"><button class="btn primary" id="apply"${applied ? " disabled" : ""}>${applied ? "Ya te postulaste" : "Postularme"}</button>
+      <span class="small muted">Se enviará tu perfil a ${esc(co.name)}.</span></div>` + fit;
+  } else if (m.type === "guest") {
+    fit = `<div class="card col"><b>¿Te interesa?</b><span class="small muted">Ingresa como candidato desde el menú de sesión para postularte y ver tu compatibilidad.</span></div>`;
+  } else if (m.user.id === j.companyId) {
+    fit = `<div class="card col"><b>Esta es una vacante tuya</b><button class="btn primary" data-go="gestion" data-id="${j.id}">Ver postulados y sugeridos</button></div>`;
+  }
+  if(route.view !== "vacante" || route.id !== j.id) return;
+  app.innerHTML = `<div class="page wrap"><div class="inner col">
+    <button class="link" data-go="empleos" style="align-self:flex-start">← Volver a empleos</button>
+    <div class="layout">
+      <article class="card col detail">
+        <div class="head-row" style="gap:14px"><span class="logo-co" style="background:${co.color}">${initials(co.name)}</span>
+          <div style="min-width:0;margin-right:auto"><h1>${esc(j.title)}</h1><div class="muted">${esc(co.name)} · ${esc(co.sector)}</div></div></div>
+        <div class="facts">
+          <div><span>Ubicación</span><b>${esc(j.city)}</b></div><div><span>Modalidad</span><b>${MODE[j.workMode]}</b></div>
+          <div><span>Salario mensual</span><b>${salary(j)}</b></div><div><span>Contrato</span><b>${esc(j.contract)}</b></div>
+          <div><span>Experiencia</span><b>${j.experience} ${j.experience === 1 ? "año" : "años"}</b></div><div><span>Publicación</span><b>${ago(j.postedAt)}</b></div></div>
+        <div><h3 style="font-size:17px;margin-bottom:6px">Descripción</h3><p class="desc" style="margin:0">${esc(j.description)}</p></div>
+        <div><h3 style="font-size:17px;margin-bottom:8px">Requisitos</h3><div class="tagrow">${j.requiredSkills.map(s => `<span class="tag">${esc(s)}</span>`).join("")}</div></div>
+        ${j.desiredSkills.length ? `<div><h3 style="font-size:17px;margin-bottom:8px">Deseable</h3><div class="tagrow">${j.desiredSkills.map(s => `<span class="tag">${esc(s)}</span>`).join("")}</div></div>` : ""}
+      </article>
+      <aside class="col">${fit}</aside>
+    </div></div></div>`;
+  const ap = document.getElementById("apply");
+  if (ap) ap.onclick = () => { D.applications.push({ id: "a-" + Date.now(), jobId: j.id, candidateId: me().user.id, at: Date.now(), status: "Enviada" }); saveData(); toast(`Postulación enviada a ${co.name}.`); viewVacante(); };
+}
+
+/* ---------- Candidato: postulaciones ---------- */
+async function viewPostulaciones() {
+  const m = me(); if (m.type !== "cand") return go("empleos");
+  const apps = P.appsForCand(m.user.id).sort((a, b) => b.at - a.at);
+  const r = await NeoConexion.recommendationsFor(m.user.id, 50, 0);
+  const sc = {}; if (r.status === 200) r.body.recommendations.forEach(x => sc[x.jobId] = x.matchScore);
+  if(route.view !== "postulaciones") return;
+  app.innerHTML = `<div class="page wrap"><div class="inner col">
+    <h1 style="font-size:26px">Mis postulaciones</h1>
+    ${apps.length ? `<div class="card tablewrap"><table class="table"><thead><tr><th>Vacante</th><th>Empresa</th><th>Fecha</th><th>Compatibilidad</th><th>Estado</th></tr></thead><tbody>
+      ${apps.map(a => { const j = P.job(a.jobId); if (!j) return ""; return `<tr><td><button class="link" data-go="vacante" data-id="${j.id}">${esc(j.title)}</button></td><td>${esc(P.company(j.companyId).name)}</td><td>${new Date(a.at).toLocaleDateString("es-CO")}</td><td>${sc[j.id] != null ? matchPill(sc[j.id]) : `<span class="muted small">—</span>`}</td><td><span class="status">${esc(a.status)}</span></td></tr>`; }).join("")}
+    </tbody></table></div>` : `<div class="empty">Aún no te has postulado. <button class="link" data-go="empleos">Explora vacantes</button></div>`}
+  </div></div>`;
+}
+
+/* ---------- Candidato: perfil ---------- */
+function viewPerfil() {
+  const m = me(); if (m.type !== "cand") return go("empleos");
+  const u = m.user;
+  app.innerHTML = `<div class="page wrap"><div class="inner col" style="max-width:760px">
+    <h1 style="font-size:26px">Mi perfil</h1>
+    <p class="muted" style="margin:0">Mantén tu perfil al día: tus recomendaciones se actualizan cada vez que lo guardas.</p>
+    <form class="card form" id="pf" novalidate>
+      <div class="grid2"><div class="field"><label for="p_name">Nombre completo</label><input id="p_name" value="${esc(u.name)}" required></div>
+        <div class="field"><label for="p_head">Título profesional</label><input id="p_head" value="${esc(u.headline)}"></div></div>
+      <div class="grid2"><div class="field"><label for="p_city">Ciudad</label><input id="p_city" value="${esc(u.city)}" required></div>
+        <div class="field"><label for="p_years">Años de experiencia</label><input id="p_years" type="number" min="0" step="0.5" value="${u.years}"></div></div>
+      <div class="field"><label for="p_skills">Habilidades</label><input id="p_skills" value="${esc(u.skills.join(", "))}"><span class="hint">Sepáralas con comas. Ej: Excel, Ventas, Python</span></div>
+      <div class="grid2"><div class="field"><label for="p_mode">Modalidad preferida</label><select id="p_mode">${["remote", "hybrid", "onsite", "any"].map(x => `<option value="${x}"${x === u.workMode ? " selected" : ""}>${MODE[x]}</option>`).join("")}</select></div>
+        <div class="field"><label for="p_sal">Aspiración salarial mensual (COP)</label><input id="p_sal" type="number" min="0" step="100000" value="${u.salary ?? ""}"></div></div>
+      <div id="p_msg"></div>
+      <div><button class="btn primary" type="submit">Guardar perfil</button></div>
+    </form></div></div>`;
+  const form = document.getElementById("pf");
+  const value = id => document.getElementById(id).value;
+  const readProfile = () => ({ ...u, name: value("p_name").trim(), headline: value("p_head").trim(), city: value("p_city").trim(),
+    years: value("p_years") === "" ? null : Number(value("p_years")), skills: value("p_skills").split(",").map(s=>s.trim()).filter(Boolean),
+    workMode: value("p_mode"), salary: value("p_sal") === "" ? null : Number(value("p_sal")) });
+  const preview = () => JsonMachine.preview("POST", "/api/v1/candidates", toApiCandidate(readProfile()));
+  form.addEventListener("input", preview); preview();
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const button = form.querySelector('[type="submit"]'); if(button.disabled) return;
+    const msg = document.getElementById("p_msg"), upd = readProfile();
+    if (!upd.name || !upd.city || upd.years === null || !Number.isFinite(upd.years) || upd.years < 0 ||
+        (upd.salary !== null && (!Number.isFinite(upd.salary) || upd.salary < 0))) {
+      msg.innerHTML = '<div class="notice err">Completa nombre, ciudad y experiencia con valores válidos. El salario no puede ser negativo.</div>'; return;
+    }
+    button.disabled = true; button.textContent = "Esperando confirmación…";
+    try {
+      const r = await NeoConexion.upsertCandidate(toApiCandidate(upd));
+      if (!confirmed(r)) { msg.innerHTML = `<div class="notice err">${esc(apiError(r))} Los cambios no se confirmaron como guardados.</div>`; return; }
+      Object.assign(u, upd, {name:r.body.name, city:r.body.location, skills:r.body.skills, years:r.body.yearsOfExperience, workMode:r.body.preferredWorkMode}); saveData();
+      msg.innerHTML = `<div class="notice ok">Perfil confirmado por NeoConexión (HTTP ${r.status}). El JSON de salida ya corresponde al registro de la API. <button class="link" data-go="empleos" type="button">Ver recomendaciones</button></div>`;
+      renderSession();
+    } finally { button.disabled = false; button.textContent = "Guardar perfil"; }
+  };
+}
+
+/* ---------- Empresa: mis vacantes ---------- */
+async function viewEmpresa() {
+  const m = me(); if (m.type !== "co") return go("empleos");
+  const jobs = D.jobs.filter(j => j.companyId === m.user.id).sort((a, b) => b.postedAt - a.postedAt);
+  const counts = {};
+  for (const j of jobs) { const r = await NeoConexion.candidatesFor(j.id, 50, 60); counts[j.id] = r.status === 200 ? r.body.total : null; }
+  if(route.view !== "empresa") return;
+  app.innerHTML = `<div class="page wrap"><div class="inner col">
+    <div class="head-row"><div style="margin-right:auto"><h1 style="font-size:26px">Mis vacantes</h1><span class="muted">${esc(m.user.name)} · ${esc(m.user.sector)}</span></div>
+      <button class="btn primary" data-go="publicar">Publicar vacante</button></div>
+    ${jobs.length ? `<div class="card tablewrap"><table class="table"><thead><tr><th>Vacante</th><th>Ciudad</th><th>Publicada</th><th>Postulados</th><th>Sugeridos ≥60 puntos</th><th></th></tr></thead><tbody>
+      ${jobs.map(j => `<tr><td><b>${esc(j.title)}</b><div class="small muted">${MODE[j.workMode]} · ${salary(j)}</div></td><td>${esc(j.city)}</td><td>${ago(j.postedAt)}</td><td>${P.appsForJob(j.id).length}</td><td>${counts[j.id] ?? "—"}</td><td><button class="btn sm" data-go="gestion" data-id="${j.id}">Gestionar</button></td></tr>`).join("")}
+    </tbody></table></div>` : `<div class="empty">Todavía no has publicado vacantes. <button class="link" data-go="publicar">Publica la primera</button></div>`}
+  </div></div>`;
+}
+
+/* ---------- Empresa: gestión de una vacante ---------- */
+let gestionTab = "postulados";
+function personRow(c, r, actions) {
+  return `<div class="person"><span class="avatar" style="width:44px;height:44px;background:${colorFor(c.id)}">${initials(c.name)}</span>
+    <div style="min-width:0"><h4>${esc(c.name)}</h4><div class="small muted">${esc(c.headline)} · ${esc(c.city)} · ${c.years} años · prefiere ${MODE[c.workMode].toLowerCase()}</div>
+      ${r ? `<div class="tagrow" style="margin-top:8px">${r.matchingSkills.map(s => `<span class="tag ok">✓ ${esc(s)}</span>`).join("")}${r.missingSkills.map(s => `<span class="tag miss">Sin ${esc(s)}</span>`).join("")}</div>
+      <div class="small muted" style="margin-top:6px">${esc(r.explanations.slice(-3).join(" · "))}</div>` : ""}</div>
+    <div class="side">${r ? matchPill(r.matchScore) : ""}${actions}</div></div>`;
+}
+async function viewGestion() {
+  const j = P.job(route.id), m = me(); if (!j || m.type !== "co" || j.companyId !== m.user.id) return go("empresa");
+  const apps = P.appsForJob(j.id);
+  const appRows = [];
+  for (const a of apps) { const c = P.cand(a.candidateId); if (!c) continue; const r = await NeoConexion.diagnosis(c.id, j.id); appRows.push({ a, c, r: r.status === 200 ? r.body : null }); }
+  appRows.sort((x, y) => (y.r?.matchScore ?? 0) - (x.r?.matchScore ?? 0));
+  const sug = await NeoConexion.candidatesFor(j.id, 20, 0);
+  if(route.view !== "gestion" || route.id !== j.id) return;
+  const applied = new Set(apps.map(a => a.candidateId));
+  const sugRows = sug.status === 200 ? sug.body.recommendations.filter(r => !applied.has(r.candidateId) && P.cand(r.candidateId)) : [];
+  const invited = id => D.invites.some(i => i.jobId === j.id && i.candidateId === id);
+  app.innerHTML = `<div class="page wrap"><div class="inner col">
+    <button class="link" data-go="empresa" style="align-self:flex-start">← Mis vacantes</button>
+    <div class="card head-row"><div style="margin-right:auto;min-width:0"><h1 style="font-size:24px">${esc(j.title)}</h1><div class="muted small">${esc(j.city)} · ${MODE[j.workMode]} · ${salary(j)} · ${ago(j.postedAt)}</div></div>
+      <button class="btn sm" data-go="publicar" data-id="${j.id}">Editar</button><button class="btn sm" data-go="vacante" data-id="${j.id}">Ver publicación</button></div>
+    <div class="tabs" role="tablist"><button role="tab" data-tab="postulados" class="${gestionTab === "postulados" ? "on" : ""}">Postulados (${appRows.length})</button><button role="tab" data-tab="sugeridos" class="${gestionTab === "sugeridos" ? "on" : ""}">Candidatos sugeridos (${sugRows.length})</button></div>
+    <div class="card">
+      ${gestionTab === "postulados"
+        ? (appRows.length ? appRows.map(({ a, c, r }) => personRow(c, r, `<span class="status">${esc(a.status)}</span><select data-status="${a.id}" aria-label="Cambiar estado" style="width:auto;padding:4px 8px;font-size:14px">${["Enviada", "En revisión", "Entrevista", "Finalista", "Descartado"].map(s => `<option${s === a.status ? " selected" : ""}>${s}</option>`).join("")}</select>`)).join("") : `<div class="empty">Aún no hay postulados. Revisa los candidatos sugeridos.</div>`)
+        : (sugRows.length ? `<p class="small muted" style="margin:0 0 4px">Perfiles registrados que encajan con la vacante y aún no se han postulado, ordenados por compatibilidad.</p>` + sugRows.map(r => { const c = P.cand(r.candidateId); return personRow(c, r, invited(c.id) ? `<span class="status applied">Invitado</span>` : `<button class="btn sm primary" data-invite="${c.id}">Invitar a postularse</button>`); }).join("") : `<div class="empty">No encontramos perfiles que compartan habilidades con esta vacante.</div>`)}
+    </div></div></div>`;
+  app.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { gestionTab = b.dataset.tab; viewGestion(); });
+  app.querySelectorAll("[data-status]").forEach(s => s.onchange = () => { D.applications.find(a => a.id === s.dataset.status).status = s.value; saveData(); toast("Estado actualizado."); viewGestion(); });
+  app.querySelectorAll("[data-invite]").forEach(b => b.onclick = () => { D.invites.push({ jobId: j.id, candidateId: b.dataset.invite, at: Date.now() }); saveData(); toast(`Invitación registrada para ${P.cand(b.dataset.invite).name}.`); viewGestion(); });
+}
+
+/* ---------- Empresa: publicar / editar ---------- */
+function viewPublicar() {
+  const m = me(); if (m.type !== "co") return go("empleos");
+  const edit = route.id ? P.job(route.id) : null;
+  const j = edit || { title: "", city: m.user.city, workMode: "hybrid", experience: 1, requiredSkills: [], desiredSkills: [], salaryMin: "", salaryMax: "", contract: "Término indefinido", description: "" };
+  app.innerHTML = `<div class="page wrap"><div class="inner col" style="max-width:820px">
+    <h1 style="font-size:26px">${edit ? "Editar vacante" : "Publicar vacante"}</h1>
+    <p class="muted" style="margin:0">Al publicar te mostraremos de inmediato los candidatos que mejor encajan.</p>
+    <form class="card form" id="jf" novalidate>
+      <div class="field"><label for="v_title">Cargo</label><input id="v_title" value="${esc(j.title)}" placeholder="Ej: Analista de nómina"></div>
+      <div class="grid2"><div class="field"><label for="v_city">Ciudad</label><input id="v_city" value="${esc(j.city)}"></div>
+        <div class="field"><label for="v_mode">Modalidad</label><select id="v_mode">${["remote", "hybrid", "onsite"].map(x => `<option value="${x}"${x === j.workMode ? " selected" : ""}>${MODE[x]}</option>`).join("")}</select></div>
+        <div class="field"><label for="v_exp">Experiencia mínima (años)</label><input id="v_exp" type="number" min="0" step="0.5" value="${j.experience}"></div>
+        <div class="field"><label for="v_contract">Tipo de contrato</label><select id="v_contract">${["Término indefinido", "Término fijo", "Prestación de servicios", "Aprendizaje"].map(x => `<option${x === j.contract ? " selected" : ""}>${x}</option>`).join("")}</select></div>
+        <div class="field"><label for="v_smin">Salario mínimo (COP)</label><input id="v_smin" type="number" min="0" step="100000" value="${j.salaryMin}"></div>
+        <div class="field"><label for="v_smax">Salario máximo (COP)</label><input id="v_smax" type="number" min="0" step="100000" value="${j.salaryMax}"></div></div>
+      <div class="field"><label for="v_req">Habilidades obligatorias</label><input id="v_req" value="${esc(j.requiredSkills.join(", "))}" placeholder="Ej: Excel, Nómina"><span class="hint">Sepáralas con comas.</span></div>
+      <div class="field"><label for="v_des">Habilidades deseables</label><input id="v_des" value="${esc(j.desiredSkills.join(", "))}" placeholder="Opcional"></div>
+      <div class="field"><label for="v_desc">Descripción</label><textarea id="v_desc">${esc(j.description)}</textarea></div>
+      <div id="v_msg"></div>
+      <div><button class="btn primary" type="submit">${edit ? "Guardar cambios" : "Publicar vacante"}</button></div>
+    </form></div></div>`;
+  const form = document.getElementById("jf"), value = id => document.getElementById(id).value;
+  const draftId = edit?.id || "j-" + crypto.randomUUID();
+  const readJob = () => ({id: draftId, companyId: m.user.id, postedAt: edit?.postedAt || Date.now(),
+    title: value("v_title").trim(), city: value("v_city").trim(), workMode: value("v_mode"),
+    experience: value("v_exp") === "" ? null : Number(value("v_exp")), contract: value("v_contract"),
+    salaryMin: Number(value("v_smin")), salaryMax: Number(value("v_smax")),
+    requiredSkills: value("v_req").split(",").map(s=>s.trim()).filter(Boolean),
+    desiredSkills: value("v_des").split(",").map(s=>s.trim()).filter(Boolean), description: value("v_desc").trim()});
+  const preview = () => JsonMachine.preview("POST", "/api/v1/jobs", toApiJob(readJob()));
+  form.addEventListener("input", preview); preview();
+  form.onsubmit = async e => {
+    e.preventDefault(); const button=form.querySelector('[type="submit"]'); if(button.disabled) return;
+    const msg=document.getElementById("v_msg"), data=readJob(), problems=[];
+    if(!data.title) problems.push("el cargo"); if(!data.city) problems.push("la ciudad");
+    if(data.experience===null || !Number.isFinite(data.experience) || data.experience<0) problems.push("una experiencia válida");
+    if(!data.requiredSkills.length) problems.push("al menos una habilidad obligatoria");
+    if(!Number.isFinite(data.salaryMin)||!Number.isFinite(data.salaryMax)||!(data.salaryMin>0)||!(data.salaryMax>=data.salaryMin)) problems.push("un rango salarial válido");
+    if(problems.length){ msg.innerHTML=`<div class="notice err">Falta ${esc(problems.join(", "))}.</div>`;return; }
+    button.disabled=true;button.textContent="Esperando confirmación…";
+    try {
+      const r=await NeoConexion.upsertJob(toApiJob(data));
+      if(!confirmed(r)){msg.innerHTML=`<div class="notice err">${esc(apiError(r))} La vacante no se confirmó como publicada.</div>`;return;}
+      const saved={...data,title:r.body.title,city:r.body.location,requiredSkills:r.body.requiredSkills,desiredSkills:r.body.desiredSkills,workMode:r.body.workMode};
+      const existing=P.job(saved.id); if(existing)Object.assign(existing,saved);else D.jobs.push(saved);
+      saveData(); msg.innerHTML=`<div class="notice ok">Vacante confirmada por NeoConexión (HTTP ${r.status}). <button class="link" data-go="gestion" data-id="${esc(saved.id)}" type="button">Ver candidatos compatibles</button></div>`;
+      // Subsequent submissions update the same ID, including retries after a lost response.
+      if(!edit){ route.id=saved.id; }
+    } finally {button.disabled=false;button.textContent="Guardar cambios";}
+  };
+}
+
+/* ---------- Integración (administración) ---------- */
+function viewIntegracion() {
+  const c = NeoConexion.config;
+  app.innerHTML = `<div class="page wrap"><div class="inner col" style="max-width:760px">
+    <h1 style="font-size:26px">Integración NeoConexión</h1>
+    <p class="muted" style="margin:0">Conecta Empleos guarda sus propios datos (empresas, vacantes, postulaciones) y usa NeoConexión solo para calcular compatibilidad. Toda la comunicación pasa por un único cliente, así que cambiar de motor no afecta el resto de la app.</p>
+    <form class="card form" id="cf">
+      <div class="notice ok">Modo real: todas las respuestas de compatibilidad vienen de la API HTTP. La máquina no utiliza un motor simulado.</div>
+      <div class="grid2"><div class="field"><label for="i_url">URL base de la API</label><input id="i_url" value="${esc(c.baseUrl)}"></div>
+        <div class="field"><label for="i_key">API Key (X-API-Key)</label><input id="i_key" type="password" value="${esc(c.apiKey)}" placeholder="Vacía si está desactivada"></div></div>
+      <div class="notice info small">Abierta desde /app/ usa la API del mismo servidor. Para otro servidor, configura CORS_ORIGINS con el origen de esta página. La API Key se conserva solo durante la sesión de esta pestaña. Sincronizar envía o reemplaza registros por ID; los ejemplos locales no se envían hasta que lo solicites.</div>
+      <div id="i_msg"></div>
+      <div class="head-row" style="gap:8px"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" id="i_test">Probar conexión</button><button class="btn" type="button" id="i_sync">Sincronizar todos los datos</button></div>
+    </form>
+    <div class="card col"><h3 style="font-size:17px">Llamadas que hace la app</h3>
+      <div class="tablewrap"><table class="table code"><tbody>
+        <tr><td>Guardar perfil</td><td>POST /api/v1/candidates</td></tr><tr><td>Publicar o editar vacante</td><td>POST /api/v1/jobs</td></tr>
+        <tr><td>Recomendadas y orden por compatibilidad</td><td>GET /api/v1/candidates/{id}/recommendations</td></tr>
+        <tr><td>Tu compatibilidad en una vacante · postulados</td><td>GET /api/v1/candidates/{id}/jobs/{jobId}/diagnosis</td></tr>
+        <tr><td>Candidatos sugeridos</td><td>GET /api/v1/jobs/{id}/candidates</td></tr></tbody></table></div></div>
+  </div></div>`;
+  const read = () => ({mode:"http",baseUrl:document.getElementById("i_url").value.trim(),apiKey:document.getElementById("i_key").value});
+  const msg = t => { const node=document.getElementById("i_msg"); if(node)node.innerHTML=t; };
+  const configure = () => {try{NeoConexion.saveConfig(read());return true;}catch(error){msg(`<div class="notice err">${esc(error.message)}</div>`);return false;}};
+  document.getElementById("cf").onsubmit=e=>{e.preventDefault();if(configure())msg('<div class="notice ok">Configuración de API guardada.</div>');};
+  const test=document.getElementById("i_test"), sync=document.getElementById("i_sync");
+  test.onclick=async()=>{if(!configure()||sync.disabled||test.disabled)return;test.disabled=true;sync.disabled=true;
+    try{const r=await NeoConexion.health();msg(confirmed(r)?'<div class="notice ok">Conexión real confirmada con la API y Neo4j.</div>':`<div class="notice err">${esc(apiError(r))}</div>`);}
+    finally{test.disabled=false;sync.disabled=false;}};
+  sync.onclick=async()=>{if(!configure()||sync.disabled||test.disabled)return;sync.disabled=true;test.disabled=true;
+    msg('<div class="notice info">Sincronizando; cada respuesta real aparece en la máquina…</div>');
+    try{const result=await syncAll();msg(result.errors.length?`<div class="notice err">${result.ok} de ${result.total} registros confirmados. ${result.errors.length} sin confirmar. ${esc(result.errors[0])}</div>`:`<div class="notice ok">${result.ok} de ${result.total} registros confirmados por la API. Ya puedes consultar recomendaciones.</div>`);}
+    finally{sync.disabled=false;test.disabled=false;}};
+}
+
+const VIEWS = { empleos: viewEmpleos, vacante: viewVacante, postulaciones: viewPostulaciones, perfil: viewPerfil, empresa: viewEmpresa, gestion: viewGestion, publicar: viewPublicar, integracion: viewIntegracion };
+
+(async () => {
+  if (!D) { D = freshData(); saveData(); }
+  go("empleos");
+})();
+})();
+</script>
+</body>
+</html>
