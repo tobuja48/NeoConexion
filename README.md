@@ -25,6 +25,8 @@ docker compose up -d --build --wait
 docker compose ps
 ```
 
+**Frontends en el navegador (CORS).** Para que una web llame a la API desde el navegador, agrega su origen en `CORS_ORIGINS`, separado por comas si son varios, por ejemplo `CORS_ORIGINS=http://localhost:8010`. Vacío deja CORS desactivado. Un HTML abierto con doble clic envía el origen `null`; úsalo solo en desarrollo local. Las integraciones de servidor a servidor no necesitan CORS.
+
 No sobrescribas `.env` en arranques posteriores. Compose no necesita Python instalado en el host. La imagen utiliza Python 3.13 y usuario no root UID 10001.
 
 | Recurso | Dirección predeterminada |
