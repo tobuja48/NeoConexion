@@ -4,8 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>img{max-width:100%}[hidden]{display:none!important}body{margin:0}</style>
-<title>Conecta Empleos · NeoConexión en vivo</title>
-<link rel="stylesheet" href="./machine.css">
+<title>Conecta Empleos</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap">
@@ -163,61 +162,141 @@ footer .inner span:first-child{margin-right:auto}
 <div id="app"></div>
 
 <footer class="wrap"><div class="inner">
-  <span>Conecta Empleos · datos locales de prueba · matching por API real</span>
-  <button class="link" id="goIntegration">Conectar / sincronizar API</button>
+  <span>Conecta Empleos · datos de ejemplo</span>
+  <button class="link" id="goIntegration">Integración NeoConexión</button>
   <button class="link" id="resetAll">Restaurar datos</button>
 </div></footer>
 
-<script src="./machine.js"></script>
 <script>
 (() => {
-/* Cliente HTTP real; todas las solicitudes alimentan la máquina visual. */
-const CONFIG_KEY = "conecta-neoconexion-config";
-const DEFAULT_URL = location.protocol === "http:" || location.protocol === "https:" ? location.origin : "http://127.0.0.1:18000";
-const NeoConexion = {
-  config: (() => {
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; } catch {}
-    const c = { mode: "http", baseUrl: saved.mode === "http" ? saved.baseUrl || DEFAULT_URL : DEFAULT_URL, apiKey: "" };
-    try {
-      c.apiKey = sessionStorage.getItem("conecta-api-key") || saved.apiKey || "";
-      sessionStorage.setItem("conecta-api-key", c.apiKey);
-      localStorage.setItem(CONFIG_KEY, JSON.stringify({mode: "http", baseUrl: c.baseUrl}));
-    } catch {}
-    return c;
-  })(),
-  saveConfig(c) {
-    const url = new URL(c.baseUrl);
-    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash || url.pathname !== "/") {
-      throw new Error("Introduce solo el origen de la API, por ejemplo http://127.0.0.1:18000, sin /api/v1 ni /docs.");
+/* =================================================================
+   CAPA 1 · MOTOR NEOCONEXIÓN EMBEBIDO
+   Réplica del contrato /api/v1. Se usa cuando la app no tiene
+   una URL de API configurada. Misma fórmula 50/25/15/10.
+   ================================================================= */
+const Engine = (() => {
+  const W = { skills: .5, experience: .25, location: .15, workMode: .1 };
+  const KEY = "neoconexion-engine-v1";
+  const k = s => String(s).trim().toLowerCase();
+  const r1 = n => Math.round(n * 10) / 10;
+  let g;
+  const blank = () => ({ candidates: {}, jobs: {}, names: { skill: {}, location: {}, company: {} } });
+  try { g = JSON.parse(localStorage.getItem(KEY)) || blank(); } catch (e) { g = blank(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(g)); } catch (e) {} };
+  const canon = (kind, v) => { const kk = k(v); if (!g.names[kind][kk]) g.names[kind][kk] = String(v).trim(); return g.names[kind][kk]; };
+  const dedupe = l => { const s = new Set(), o = []; for (const x of l) { const t = String(x).trim(); if (t && !s.has(k(t))) { s.add(k(t)); o.push(t); } } return o; };
+  const err = (status, code, message, details = null) => ({ status, body: { error: { code, message, details } } });
+
+  function validate(b, spec) {
+    const e = [], add = (f, msg) => e.push({ loc: ["body", f], msg });
+    if (!b || typeof b !== "object") return [{ loc: ["body"], msg: "Se esperaba un objeto" }];
+    for (const f in b) if (!spec[f]) add(f, "Campo no permitido");
+    for (const [f, r] of Object.entries(spec)) {
+      const v = b[f];
+      if (v === undefined) { if (r.req) add(f, "Campo obligatorio"); continue; }
+      if (v === null) { if (!r.null) add(f, "No admite null"); continue; }
+      if (r.t === "s" && (typeof v !== "string" || v.trim().length < (r.min ?? 1) || v.length > r.max)) add(f, "Texto inválido");
+      if (r.t === "n" && (typeof v !== "number" || !isFinite(v) || v < 0)) add(f, "Número finito ≥ 0");
+      if (r.t === "e" && !r.v.includes(v)) add(f, "Valor no admitido");
+      if (r.t === "l" && (!Array.isArray(v) || v.length > 100 || v.some(x => typeof x !== "string" || !x.trim() || x.length > 100))) add(f, "Lista inválida");
     }
-    this.config = {mode: "http", baseUrl: url.origin, apiKey: c.apiKey};
-    try {
-      localStorage.setItem(CONFIG_KEY, JSON.stringify({mode: "http", baseUrl: url.origin}));
-      sessionStorage.setItem("conecta-api-key", c.apiKey);
-    } catch {}
-  },
+    return e;
+  }
+  const CS = { id: { t: "s", req: 1, max: 128 }, name: { t: "s", req: 1, max: 200 }, location: { t: "s", req: 1, max: 200 }, yearsOfExperience: { t: "n", req: 1 }, skills: { t: "l", req: 1 }, preferredWorkMode: { t: "e", req: 1, v: ["remote", "hybrid", "onsite", "any"] }, expectedSalary: { t: "n", null: 1 } };
+  const JS = { id: { t: "s", req: 1, max: 128 }, company: { t: "s", req: 1, max: 200 }, title: { t: "s", req: 1, max: 200 }, description: { t: "s", null: 1, min: 0, max: 5000 }, location: { t: "s", req: 1, max: 200 }, workMode: { t: "e", req: 1, v: ["remote", "hybrid", "onsite"] }, requiredExperience: { t: "n", req: 1 }, requiredSkills: { t: "l", req: 1 }, desiredSkills: { t: "l" } };
+
+  function score(c, j) {
+    const have = new Set(c.skills.map(k));
+    const rh = j.requiredSkills.filter(s => have.has(k(s))), dh = j.desiredSkills.filter(s => have.has(k(s)));
+    const rc = j.requiredSkills.length ? rh.length / j.requiredSkills.length : 1, dc = j.desiredSkills.length ? dh.length / j.desiredSkills.length : 1;
+    const skills = !j.requiredSkills.length ? 100 : j.desiredSkills.length ? 70 * rc + 30 * dc : 100 * rc;
+    const experience = j.requiredExperience === 0 ? 100 : Math.min(1, c.yearsOfExperience / j.requiredExperience) * 100;
+    const remote = j.workMode === "remote", same = k(c.location) === k(j.location);
+    const location = remote || same ? 100 : 0;
+    const cm = c.preferredWorkMode, jm = j.workMode;
+    const workMode = cm === jm || cm === "any" ? 100 : (cm === "hybrid" || jm === "hybrid") ? 50 : 0;
+    const ex = [`Cumple ${rh.length} de ${j.requiredSkills.length} habilidades obligatorias`];
+    if (j.desiredSkills.length) ex.push(`Cumple ${dh.length} de ${j.desiredSkills.length} habilidades deseables`);
+    ex.push(`${c.yearsOfExperience >= j.requiredExperience ? "Experiencia suficiente" : "Experiencia insuficiente"} (${c.yearsOfExperience} años vs ${j.requiredExperience} requeridos)`);
+    ex.push(remote ? "Vacante remota: ubicación compatible" : same ? `Misma ubicación (${j.location})` : `Ubicación diferente (${c.location} vs ${j.location})`);
+    ex.push(workMode === 100 ? "Modalidad de trabajo compatible" : workMode === 50 ? "Modalidad parcialmente compatible" : "Modalidad de trabajo incompatible");
+    return { matchScore: r1(skills * W.skills + experience * W.experience + location * W.location + workMode * W.workMode),
+      breakdown: { skills: r1(skills), experience: r1(experience), location, workMode },
+      matchingSkills: [...rh, ...dh], missingSkills: j.requiredSkills.filter(s => !have.has(k(s))), explanations: ex, passesSkillPrefilter: rh.length + dh.length > 0 };
+  }
+  function lm(q) {
+    const limit = q.has("limit") ? +q.get("limit") : 10, minScore = q.has("minScore") ? +q.get("minScore") : 0;
+    return (!Number.isInteger(limit) || limit < 1 || limit > 50 || !(minScore >= 0 && minScore <= 100)) ? null : { limit, minScore };
+  }
+  const rank = (a, b) => b.matchScore - a.matchScore || (a._id < b._id ? -1 : 1);
+
+  function handle(method, url, body) {
+    const [path, qs] = url.split("?"), q = new URLSearchParams(qs || "");
+    const s = path.split("/").filter(Boolean).map(decodeURIComponent);
+    if (path === "/health" || path === "/health/db") return { status: 200, body: { status: "ok" } };
+    const [, , res, id, sub, subId, subsub] = s;
+    if (res === "candidates") {
+      if (method === "POST" && !id) {
+        const e = validate(body, CS); if (e.length) return err(422, "VALIDATION_ERROR", "La solicitud no es válida.", e);
+        const c = { ...body, id: body.id.trim(), name: body.name.trim(), expectedSalary: body.expectedSalary ?? null };
+        const created = !g.candidates[c.id];
+        g.candidates[c.id] = { ...c, location: canon("location", c.location), skills: dedupe(c.skills).map(x => canon("skill", x)) }; save();
+        return { status: created ? 201 : 200, body: g.candidates[c.id] };
+      }
+      const c = g.candidates[id]; if (!c) return err(404, "NOT_FOUND", "Candidato no encontrado.");
+      if (method === "GET" && !sub) return { status: 200, body: c };
+      if (sub === "recommendations") {
+        const p = lm(q); if (!p) return err(422, "VALIDATION_ERROR", "Parámetros inválidos.");
+        const all = Object.values(g.jobs).map(j => [j, score(c, j)]).filter(([, r]) => r.passesSkillPrefilter && r.matchScore >= p.minScore)
+          .map(([j, r]) => ({ _id: j.id, jobId: j.id, title: j.title, company: j.company, matchScore: r.matchScore, breakdown: r.breakdown, matchingSkills: r.matchingSkills, missingSkills: r.missingSkills, explanations: r.explanations })).sort(rank);
+        return { status: 200, body: { candidateId: id, total: all.length, recommendations: all.slice(0, p.limit).map(({ _id, ...x }) => x) } };
+      }
+      if (sub === "jobs" && subsub === "diagnosis") {
+        const j = g.jobs[subId]; if (!j) return err(404, "NOT_FOUND", "Vacante no encontrada.");
+        return { status: 200, body: { candidateId: id, jobId: subId, ...score(c, j) } };
+      }
+    }
+    if (res === "jobs") {
+      if (method === "POST" && !id) {
+        const e = validate(body, JS); if (e.length) return err(422, "VALIDATION_ERROR", "La solicitud no es válida.", e);
+        const req = dedupe(body.requiredSkills), rk = new Set(req.map(k));
+        const j = { ...body, id: body.id.trim(), description: body.description || null, requiredSkills: req, desiredSkills: dedupe(body.desiredSkills || []).filter(x => !rk.has(k(x))) };
+        const created = !g.jobs[j.id];
+        g.jobs[j.id] = { ...j, company: canon("company", j.company), location: canon("location", j.location), requiredSkills: j.requiredSkills.map(x => canon("skill", x)), desiredSkills: j.desiredSkills.map(x => canon("skill", x)) }; save();
+        return { status: created ? 201 : 200, body: g.jobs[j.id] };
+      }
+      const j = g.jobs[id]; if (!j) return err(404, "NOT_FOUND", "Vacante no encontrada.");
+      if (method === "GET" && !sub) return { status: 200, body: j };
+      if (sub === "candidates") {
+        const p = lm(q); if (!p) return err(422, "VALIDATION_ERROR", "Parámetros inválidos.");
+        const all = Object.values(g.candidates).map(c => [c, score(c, j)]).filter(([, r]) => r.passesSkillPrefilter && r.matchScore >= p.minScore)
+          .map(([c, r]) => ({ _id: c.id, candidateId: c.id, name: c.name, matchScore: r.matchScore, breakdown: r.breakdown, matchingSkills: r.matchingSkills, missingSkills: r.missingSkills, explanations: r.explanations })).sort(rank);
+        return { status: 200, body: { jobId: id, total: all.length, recommendations: all.slice(0, p.limit).map(({ _id, ...x }) => x) } };
+      }
+    }
+    return err(404, "NOT_FOUND", "Ruta no encontrada.");
+  }
+  return { handle, reset() { g = blank(); save(); } };
+})();
+
+/* =================================================================
+   CAPA 2 · CLIENTE NEOCONEXIÓN
+   Único punto de la app que habla con la API. Modo "embedded" usa
+   el motor local; modo "http" llama a tu API real (baseUrl + X-API-Key).
+   ================================================================= */
+const CONFIG_KEY = "conecta-neoconexion-config";
+const NeoConexion = {
+  config: (() => { try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || { mode: "embedded", baseUrl: "http://localhost:8000", apiKey: "" }; } catch (e) { return { mode: "embedded", baseUrl: "http://localhost:8000", apiKey: "" }; } })(),
+  saveConfig(c) { this.config = c; try { localStorage.setItem(CONFIG_KEY, JSON.stringify(c)); } catch (e) {} },
   async request(method, path, body) {
-    const entry = JsonMachine.start(method, path, body);
+    if (this.config.mode !== "http") return Engine.handle(method, path, body === undefined ? undefined : JSON.parse(JSON.stringify(body)));
     const headers = { "Accept": "application/json" };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (this.config.apiKey) headers["X-API-Key"] = this.config.apiKey;
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
-      const res = await fetch(this.config.baseUrl.replace(/\/$/, "") + path,
-        { method, headers, signal: controller.signal, body: body === undefined ? undefined : JSON.stringify(body) });
-      const raw = await res.text();
-      let parsed, isJson = true;
-      try { parsed = JSON.parse(raw); } catch { isJson = false; }
-      JsonMachine.finish(entry, res, parsed, raw, isJson);
-      return isJson ? { status: res.status, body: parsed } : {status: 502, body: {error: {message: "La respuesta del servidor no contiene JSON válido."}}};
-    } catch (error) {
-      JsonMachine.fail(entry, error);
-      return {status: 0, body: {error: {message: error.name === "AbortError" ?
-        "Se agotó el tiempo de espera. No se recibió confirmación; comprueba el registro antes de reenviar." :
-        "No se pudo conectar con la API. Revisa la conexión y CORS. No se recibió confirmación del guardado."}}};
-    } finally { clearTimeout(timeout); }
+      const res = await fetch(this.config.baseUrl.replace(/\/$/, "") + path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+      return { status: res.status, body: await res.json().catch(() => null) };
+    } catch (e) { return { status: 0, body: { error: { code: "NETWORK", message: "No se pudo conectar con la API." } } }; }
   },
   health() { return this.request("GET", "/health/db"); },
   upsertCandidate(c) { return this.request("POST", "/api/v1/candidates", c); },
@@ -226,8 +305,6 @@ const NeoConexion = {
   candidatesFor(jobId, limit = 50, minScore = 0) { return this.request("GET", `/api/v1/jobs/${encodeURIComponent(jobId)}/candidates?limit=${limit}&minScore=${minScore}`); },
   diagnosis(candidateId, jobId) { return this.request("GET", `/api/v1/candidates/${encodeURIComponent(candidateId)}/jobs/${encodeURIComponent(jobId)}/diagnosis`); }
 };
-const confirmed = r => r.status >= 200 && r.status < 300;
-const apiError = r => `${r.status ? "HTTP " + r.status + ": " : ""}${r.body?.error?.message || "La API no confirmó la operación."}`;
 
 /* Traductores: modelo de la plataforma → contrato de NeoConexión */
 const toApiCandidate = u => ({ id: u.id, name: u.name, location: u.city, yearsOfExperience: u.years, skills: u.skills, preferredWorkMode: u.workMode, expectedSalary: u.salary ?? null });
@@ -301,11 +378,8 @@ const P = {
   applied: (cid, jid) => D.applications.some(a => a.candidateId === cid && a.jobId === jid)
 };
 async function syncAll() {
-  const results = [];
-  for (const j of D.jobs) results.push(await NeoConexion.upsertJob(toApiJob(j)));
-  for (const c of D.candidates) results.push(await NeoConexion.upsertCandidate(toApiCandidate(c)));
-  return {total: results.length, ok: results.filter(confirmed).length,
-          errors: results.filter(r => !confirmed(r)).map(apiError)};
+  for (const j of D.jobs) await NeoConexion.upsertJob(toApiJob(j));
+  for (const c of D.candidates) await NeoConexion.upsertCandidate(toApiCandidate(c));
 }
 
 /* =================================================================
@@ -320,7 +394,7 @@ const ago = t => { const d = Math.floor((now - t) / day); return d <= 0 ? "Publi
 const initials = n => n.split(/\s+/).slice(0, 2).map(w => w[0]).join("").toUpperCase();
 const colorFor = id => ["#2F6FB0", "#2E8B57", "#C0632A", "#5B4FB5", "#B3405A", "#B38A1F", "#3A8C9C"][[...id].reduce((a, c) => a + c.charCodeAt(0), 0) % 7];
 const matchCls = s => s >= 80 ? "hi" : s >= 60 ? "mid" : "lo";
-const matchPill = s => `<span class="match ${matchCls(s)}">${Number(s).toFixed(1)} / 100</span>`;
+const matchPill = s => `<span class="match ${matchCls(s)}">${Math.round(s)}% compatible</span>`;
 const ringColor = s => s >= 80 ? "var(--good)" : s >= 60 ? "var(--brand)" : "var(--warn)";
 let toastT;
 function toast(m) { let t = document.querySelector(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.append(t); } t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2800); }
@@ -347,10 +421,7 @@ document.getElementById("sess").onchange = e => { session = e.target.value; try 
 document.addEventListener("click", e => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go, b.dataset.id); });
 document.getElementById("home").onclick = () => go("empleos");
 document.getElementById("goIntegration").onclick = () => go("integracion");
-document.getElementById("resetAll").onclick = () => {
-  if (!confirm("¿Restaurar los ejemplos locales? Esto no borra ni restaura registros de Neo4j.")) return;
-  D = freshData(); saveData(); session = "cand:c-202"; go("empleos"); toast("Ejemplos locales restaurados. Puedes sincronizarlos desde Integración.");
-};
+document.getElementById("resetAll").onclick = async () => { D = freshData(); saveData(); Engine.reset(); await syncAll(); session = "cand:c-202"; go("empleos"); toast("Datos de ejemplo restaurados."); };
 
 let route = { view: "empleos", id: null };
 const filters = { q: "", city: "", mode: "", sort: "recent" };
@@ -373,7 +444,6 @@ async function viewEmpleos() {
     const r = await NeoConexion.recommendationsFor(m.user.id, 50, 0);
     if (r.status === 200) { recs = r.body.recommendations; recs.forEach(x => scores[x.jobId] = x.matchScore); } else apiDown = true;
   }
-  if(route.view !== "empleos") return;
   const cities = [...new Set(D.jobs.map(j => j.city))].sort();
   const t = filters.q.toLowerCase();
   let list = D.jobs.filter(j => !t || [j.title, j.description, P.company(j.companyId).name, ...j.requiredSkills].join(" ").toLowerCase().includes(t))
@@ -392,7 +462,7 @@ async function viewEmpleos() {
     </form>
   </div></section>
   <div class="page wrap"><div class="inner col" style="gap:22px">
-    ${apiDown ? `<div class="notice err">No se obtuvo compatibilidad de la API. Si es tu primera visita, usa «Conectar / sincronizar API» para enviar los ejemplos. Puedes seguir explorando los datos locales.</div>` : ""}
+    ${apiDown ? `<div class="notice err">No pudimos calcular tu compatibilidad en este momento. Puedes seguir explorando las vacantes.</div>` : ""}
     ${top.length ? `<section class="col"><div class="section-title"><h2>Recomendadas para ti</h2><span class="powered">según tu perfil · motor NeoConexión</span></div>
       <div class="recs">${top.map(r => { const j = P.job(r.jobId); return j ? `<button class="rec" data-go="vacante" data-id="${j.id}">${matchPill(r.matchScore)}<h4>${esc(j.title)}</h4><span class="small muted">${esc(P.company(j.companyId).name)} · ${esc(j.city)}</span><span class="why">Tienes ${r.matchingSkills.slice(0, 3).map(esc).join(", ")}</span></button>` : ""; }).join("")}</div></section>` : ""}
     <section class="col">
@@ -416,7 +486,7 @@ async function viewVacante() {
     if (r.status === 200) {
       const d = r.body;
       fit = `<div class="card fit">
-        <div class="fit-score"><div class="ring" style="--p:${d.matchScore};--c:${ringColor(d.matchScore)}"><span>${Number(d.matchScore).toFixed(1)}</span></div>
+        <div class="fit-score"><div class="ring" style="--p:${d.matchScore};--c:${ringColor(d.matchScore)}"><span>${Math.round(d.matchScore)}%</span></div>
           <div><h3 style="font-size:17px">Tu compatibilidad</h3><span class="small muted">${d.matchScore >= 80 ? "Tu perfil encaja muy bien" : d.matchScore >= 60 ? "Buen encaje con algunos vacíos" : "Encaje parcial"}</span></div></div>
         ${d.matchingSkills.length ? `<div><div class="small" style="font-weight:600;margin-bottom:6px">Lo que ya tienes</div><div class="tagrow">${d.matchingSkills.map(s => `<span class="tag ok">✓ ${esc(s)}</span>`).join("")}</div></div>` : ""}
         ${d.missingSkills.length ? `<div><div class="small" style="font-weight:600;margin-bottom:6px">Te falta</div><div class="tagrow">${d.missingSkills.map(s => `<span class="tag miss">${esc(s)}</span>`).join("")}</div></div>` : ""}
@@ -431,7 +501,6 @@ async function viewVacante() {
   } else if (m.user.id === j.companyId) {
     fit = `<div class="card col"><b>Esta es una vacante tuya</b><button class="btn primary" data-go="gestion" data-id="${j.id}">Ver postulados y sugeridos</button></div>`;
   }
-  if(route.view !== "vacante" || route.id !== j.id) return;
   app.innerHTML = `<div class="page wrap"><div class="inner col">
     <button class="link" data-go="empleos" style="align-self:flex-start">← Volver a empleos</button>
     <div class="layout">
@@ -458,7 +527,6 @@ async function viewPostulaciones() {
   const apps = P.appsForCand(m.user.id).sort((a, b) => b.at - a.at);
   const r = await NeoConexion.recommendationsFor(m.user.id, 50, 0);
   const sc = {}; if (r.status === 200) r.body.recommendations.forEach(x => sc[x.jobId] = x.matchScore);
-  if(route.view !== "postulaciones") return;
   app.innerHTML = `<div class="page wrap"><div class="inner col">
     <h1 style="font-size:26px">Mis postulaciones</h1>
     ${apps.length ? `<div class="card tablewrap"><table class="table"><thead><tr><th>Vacante</th><th>Empresa</th><th>Fecha</th><th>Compatibilidad</th><th>Estado</th></tr></thead><tbody>
@@ -485,29 +553,18 @@ function viewPerfil() {
       <div id="p_msg"></div>
       <div><button class="btn primary" type="submit">Guardar perfil</button></div>
     </form></div></div>`;
-  const form = document.getElementById("pf");
-  const value = id => document.getElementById(id).value;
-  const readProfile = () => ({ ...u, name: value("p_name").trim(), headline: value("p_head").trim(), city: value("p_city").trim(),
-    years: value("p_years") === "" ? null : Number(value("p_years")), skills: value("p_skills").split(",").map(s=>s.trim()).filter(Boolean),
-    workMode: value("p_mode"), salary: value("p_sal") === "" ? null : Number(value("p_sal")) });
-  const preview = () => JsonMachine.preview("POST", "/api/v1/candidates", toApiCandidate(readProfile()));
-  form.addEventListener("input", preview); preview();
-  form.onsubmit = async e => {
+  document.getElementById("pf").onsubmit = async e => {
     e.preventDefault();
-    const button = form.querySelector('[type="submit"]'); if(button.disabled) return;
-    const msg = document.getElementById("p_msg"), upd = readProfile();
-    if (!upd.name || !upd.city || upd.years === null || !Number.isFinite(upd.years) || upd.years < 0 ||
-        (upd.salary !== null && (!Number.isFinite(upd.salary) || upd.salary < 0))) {
-      msg.innerHTML = '<div class="notice err">Completa nombre, ciudad y experiencia con valores válidos. El salario no puede ser negativo.</div>'; return;
-    }
-    button.disabled = true; button.textContent = "Esperando confirmación…";
-    try {
-      const r = await NeoConexion.upsertCandidate(toApiCandidate(upd));
-      if (!confirmed(r)) { msg.innerHTML = `<div class="notice err">${esc(apiError(r))} Los cambios no se confirmaron como guardados.</div>`; return; }
-      Object.assign(u, upd, {name:r.body.name, city:r.body.location, skills:r.body.skills, years:r.body.yearsOfExperience, workMode:r.body.preferredWorkMode}); saveData();
-      msg.innerHTML = `<div class="notice ok">Perfil confirmado por NeoConexión (HTTP ${r.status}). El JSON de salida ya corresponde al registro de la API. <button class="link" data-go="empleos" type="button">Ver recomendaciones</button></div>`;
-      renderSession();
-    } finally { button.disabled = false; button.textContent = "Guardar perfil"; }
+    const msg = document.getElementById("p_msg");
+    const upd = { ...u, name: p_name.value.trim(), headline: p_head.value.trim(), city: p_city.value.trim(), years: Number(p_years.value || 0),
+      skills: p_skills.value.split(",").map(s => s.trim()).filter(Boolean), workMode: p_mode.value, salary: p_sal.value === "" ? null : Number(p_sal.value) };
+    if (!upd.name || !upd.city) { msg.innerHTML = `<div class="notice err">Escribe tu nombre y tu ciudad.</div>`; return; }
+    if (!(upd.years >= 0)) { msg.innerHTML = `<div class="notice err">Los años de experiencia deben ser 0 o más.</div>`; return; }
+    Object.assign(u, upd); saveData();
+    const r = await NeoConexion.upsertCandidate(toApiCandidate(u));
+    msg.innerHTML = r.status < 300 ? `<div class="notice ok">Perfil guardado. <button class="link" data-go="empleos" type="button">Ver mis recomendaciones</button></div>`
+      : `<div class="notice err">Guardamos tu perfil, pero no pudimos actualizar tus recomendaciones. Intenta de nuevo más tarde.</div>`;
+    renderSession();
   };
 }
 
@@ -517,11 +574,10 @@ async function viewEmpresa() {
   const jobs = D.jobs.filter(j => j.companyId === m.user.id).sort((a, b) => b.postedAt - a.postedAt);
   const counts = {};
   for (const j of jobs) { const r = await NeoConexion.candidatesFor(j.id, 50, 60); counts[j.id] = r.status === 200 ? r.body.total : null; }
-  if(route.view !== "empresa") return;
   app.innerHTML = `<div class="page wrap"><div class="inner col">
     <div class="head-row"><div style="margin-right:auto"><h1 style="font-size:26px">Mis vacantes</h1><span class="muted">${esc(m.user.name)} · ${esc(m.user.sector)}</span></div>
       <button class="btn primary" data-go="publicar">Publicar vacante</button></div>
-    ${jobs.length ? `<div class="card tablewrap"><table class="table"><thead><tr><th>Vacante</th><th>Ciudad</th><th>Publicada</th><th>Postulados</th><th>Sugeridos ≥60 puntos</th><th></th></tr></thead><tbody>
+    ${jobs.length ? `<div class="card tablewrap"><table class="table"><thead><tr><th>Vacante</th><th>Ciudad</th><th>Publicada</th><th>Postulados</th><th>Sugeridos ≥60 %</th><th></th></tr></thead><tbody>
       ${jobs.map(j => `<tr><td><b>${esc(j.title)}</b><div class="small muted">${MODE[j.workMode]} · ${salary(j)}</div></td><td>${esc(j.city)}</td><td>${ago(j.postedAt)}</td><td>${P.appsForJob(j.id).length}</td><td>${counts[j.id] ?? "—"}</td><td><button class="btn sm" data-go="gestion" data-id="${j.id}">Gestionar</button></td></tr>`).join("")}
     </tbody></table></div>` : `<div class="empty">Todavía no has publicado vacantes. <button class="link" data-go="publicar">Publica la primera</button></div>`}
   </div></div>`;
@@ -543,7 +599,6 @@ async function viewGestion() {
   for (const a of apps) { const c = P.cand(a.candidateId); if (!c) continue; const r = await NeoConexion.diagnosis(c.id, j.id); appRows.push({ a, c, r: r.status === 200 ? r.body : null }); }
   appRows.sort((x, y) => (y.r?.matchScore ?? 0) - (x.r?.matchScore ?? 0));
   const sug = await NeoConexion.candidatesFor(j.id, 20, 0);
-  if(route.view !== "gestion" || route.id !== j.id) return;
   const applied = new Set(apps.map(a => a.candidateId));
   const sugRows = sug.status === 200 ? sug.body.recommendations.filter(r => !applied.has(r.candidateId) && P.cand(r.candidateId)) : [];
   const invited = id => D.invites.some(i => i.jobId === j.id && i.candidateId === id);
@@ -584,34 +639,25 @@ function viewPublicar() {
       <div id="v_msg"></div>
       <div><button class="btn primary" type="submit">${edit ? "Guardar cambios" : "Publicar vacante"}</button></div>
     </form></div></div>`;
-  const form = document.getElementById("jf"), value = id => document.getElementById(id).value;
-  const draftId = edit?.id || "j-" + crypto.randomUUID();
-  const readJob = () => ({id: draftId, companyId: m.user.id, postedAt: edit?.postedAt || Date.now(),
-    title: value("v_title").trim(), city: value("v_city").trim(), workMode: value("v_mode"),
-    experience: value("v_exp") === "" ? null : Number(value("v_exp")), contract: value("v_contract"),
-    salaryMin: Number(value("v_smin")), salaryMax: Number(value("v_smax")),
-    requiredSkills: value("v_req").split(",").map(s=>s.trim()).filter(Boolean),
-    desiredSkills: value("v_des").split(",").map(s=>s.trim()).filter(Boolean), description: value("v_desc").trim()});
-  const preview = () => JsonMachine.preview("POST", "/api/v1/jobs", toApiJob(readJob()));
-  form.addEventListener("input", preview); preview();
-  form.onsubmit = async e => {
-    e.preventDefault(); const button=form.querySelector('[type="submit"]'); if(button.disabled) return;
-    const msg=document.getElementById("v_msg"), data=readJob(), problems=[];
-    if(!data.title) problems.push("el cargo"); if(!data.city) problems.push("la ciudad");
-    if(data.experience===null || !Number.isFinite(data.experience) || data.experience<0) problems.push("una experiencia válida");
-    if(!data.requiredSkills.length) problems.push("al menos una habilidad obligatoria");
-    if(!Number.isFinite(data.salaryMin)||!Number.isFinite(data.salaryMax)||!(data.salaryMin>0)||!(data.salaryMax>=data.salaryMin)) problems.push("un rango salarial válido");
-    if(problems.length){ msg.innerHTML=`<div class="notice err">Falta ${esc(problems.join(", "))}.</div>`;return; }
-    button.disabled=true;button.textContent="Esperando confirmación…";
-    try {
-      const r=await NeoConexion.upsertJob(toApiJob(data));
-      if(!confirmed(r)){msg.innerHTML=`<div class="notice err">${esc(apiError(r))} La vacante no se confirmó como publicada.</div>`;return;}
-      const saved={...data,title:r.body.title,city:r.body.location,requiredSkills:r.body.requiredSkills,desiredSkills:r.body.desiredSkills,workMode:r.body.workMode};
-      const existing=P.job(saved.id); if(existing)Object.assign(existing,saved);else D.jobs.push(saved);
-      saveData(); msg.innerHTML=`<div class="notice ok">Vacante confirmada por NeoConexión (HTTP ${r.status}). <button class="link" data-go="gestion" data-id="${esc(saved.id)}" type="button">Ver candidatos compatibles</button></div>`;
-      // Subsequent submissions update the same ID, including retries after a lost response.
-      if(!edit){ route.id=saved.id; }
-    } finally {button.disabled=false;button.textContent="Guardar cambios";}
+  document.getElementById("jf").onsubmit = async e => {
+    e.preventDefault();
+    const msg = document.getElementById("v_msg");
+    const data = { title: v_title.value.trim(), city: v_city.value.trim(), workMode: v_mode.value, experience: Number(v_exp.value || 0), contract: v_contract.value,
+      salaryMin: Number(v_smin.value), salaryMax: Number(v_smax.value), requiredSkills: v_req.value.split(",").map(s => s.trim()).filter(Boolean),
+      desiredSkills: v_des.value.split(",").map(s => s.trim()).filter(Boolean), description: v_desc.value.trim() };
+    const problems = [];
+    if (!data.title) problems.push("el cargo"); if (!data.city) problems.push("la ciudad");
+    if (!data.requiredSkills.length) problems.push("al menos una habilidad obligatoria");
+    if (!(data.salaryMin > 0) || !(data.salaryMax >= data.salaryMin)) problems.push("un rango salarial válido (el máximo no puede ser menor que el mínimo)");
+    if (problems.length) { msg.innerHTML = `<div class="notice err">Falta ${problems.join(", ")}.</div>`; return; }
+    let job;
+    if (edit) { Object.assign(edit, data); job = edit; }
+    else { job = { id: "j-" + Date.now().toString(36), companyId: m.user.id, postedAt: Date.now(), ...data }; D.jobs.push(job); }
+    saveData();
+    const r = await NeoConexion.upsertJob(toApiJob(job));
+    if (r.status >= 300) toast("Vacante guardada. Las recomendaciones se calcularán cuando el servicio responda.");
+    else toast(edit ? "Cambios guardados." : "Vacante publicada.");
+    gestionTab = "sugeridos"; go("gestion", job.id);
   };
 }
 
@@ -622,10 +668,12 @@ function viewIntegracion() {
     <h1 style="font-size:26px">Integración NeoConexión</h1>
     <p class="muted" style="margin:0">Conecta Empleos guarda sus propios datos (empresas, vacantes, postulaciones) y usa NeoConexión solo para calcular compatibilidad. Toda la comunicación pasa por un único cliente, así que cambiar de motor no afecta el resto de la app.</p>
     <form class="card form" id="cf">
-      <div class="notice ok">Modo real: todas las respuestas de compatibilidad vienen de la API HTTP. La máquina no utiliza un motor simulado.</div>
+      <div class="field"><label for="i_mode">Motor de compatibilidad</label><select id="i_mode">
+        <option value="embedded"${c.mode !== "http" ? " selected" : ""}>Embebido (incluido en la app)</option>
+        <option value="http"${c.mode === "http" ? " selected" : ""}>API NeoConexión por HTTP</option></select></div>
       <div class="grid2"><div class="field"><label for="i_url">URL base de la API</label><input id="i_url" value="${esc(c.baseUrl)}"></div>
         <div class="field"><label for="i_key">API Key (X-API-Key)</label><input id="i_key" type="password" value="${esc(c.apiKey)}" placeholder="Vacía si está desactivada"></div></div>
-      <div class="notice info small">Abierta desde /app/ usa la API del mismo servidor. Para otro servidor, configura CORS_ORIGINS con el origen de esta página. La API Key se conserva solo durante la sesión de esta pestaña. Sincronizar envía o reemplaza registros por ID; los ejemplos locales no se envían hasta que lo solicites.</div>
+      <div class="notice info small">Esta copia de la app se publicó en un entorno que no permite llamadas a otros servidores. Para usar tu API real, aloja la app en tu propio dominio y habilita CORS para él en FastAPI.</div>
       <div id="i_msg"></div>
       <div class="head-row" style="gap:8px"><button class="btn primary" type="submit">Guardar</button><button class="btn" type="button" id="i_test">Probar conexión</button><button class="btn" type="button" id="i_sync">Sincronizar todos los datos</button></div>
     </form>
@@ -636,24 +684,18 @@ function viewIntegracion() {
         <tr><td>Tu compatibilidad en una vacante · postulados</td><td>GET /api/v1/candidates/{id}/jobs/{jobId}/diagnosis</td></tr>
         <tr><td>Candidatos sugeridos</td><td>GET /api/v1/jobs/{id}/candidates</td></tr></tbody></table></div></div>
   </div></div>`;
-  const read = () => ({mode:"http",baseUrl:document.getElementById("i_url").value.trim(),apiKey:document.getElementById("i_key").value});
-  const msg = t => { const node=document.getElementById("i_msg"); if(node)node.innerHTML=t; };
-  const configure = () => {try{NeoConexion.saveConfig(read());return true;}catch(error){msg(`<div class="notice err">${esc(error.message)}</div>`);return false;}};
-  document.getElementById("cf").onsubmit=e=>{e.preventDefault();if(configure())msg('<div class="notice ok">Configuración de API guardada.</div>');};
-  const test=document.getElementById("i_test"), sync=document.getElementById("i_sync");
-  test.onclick=async()=>{if(!configure()||sync.disabled||test.disabled)return;test.disabled=true;sync.disabled=true;
-    try{const r=await NeoConexion.health();msg(confirmed(r)?'<div class="notice ok">Conexión real confirmada con la API y Neo4j.</div>':`<div class="notice err">${esc(apiError(r))}</div>`);}
-    finally{test.disabled=false;sync.disabled=false;}};
-  sync.onclick=async()=>{if(!configure()||sync.disabled||test.disabled)return;sync.disabled=true;test.disabled=true;
-    msg('<div class="notice info">Sincronizando; cada respuesta real aparece en la máquina…</div>');
-    try{const result=await syncAll();msg(result.errors.length?`<div class="notice err">${result.ok} de ${result.total} registros confirmados. ${result.errors.length} sin confirmar. ${esc(result.errors[0])}</div>`:`<div class="notice ok">${result.ok} de ${result.total} registros confirmados por la API. Ya puedes consultar recomendaciones.</div>`);}
-    finally{sync.disabled=false;test.disabled=false;}};
+  const read = () => ({ mode: i_mode.value, baseUrl: i_url.value.trim(), apiKey: i_key.value });
+  const msg = t => document.getElementById("i_msg").innerHTML = t;
+  document.getElementById("cf").onsubmit = e => { e.preventDefault(); NeoConexion.saveConfig(read()); msg(`<div class="notice ok">Configuración guardada.</div>`); };
+  document.getElementById("i_test").onclick = async () => { NeoConexion.saveConfig(read()); const r = await NeoConexion.health(); msg(r.status === 200 ? `<div class="notice ok">Conexión correcta con el motor ${NeoConexion.config.mode === "http" ? "remoto" : "embebido"}.</div>` : `<div class="notice err">No hubo respuesta de ${esc(NeoConexion.config.baseUrl)}. Revisa la URL, que la API esté encendida y la configuración CORS.</div>`); };
+  document.getElementById("i_sync").onclick = async () => { NeoConexion.saveConfig(read()); await syncAll(); msg(`<div class="notice ok">Se enviaron ${D.jobs.length} vacantes y ${D.candidates.length} candidatos.</div>`); };
 }
 
 const VIEWS = { empleos: viewEmpleos, vacante: viewVacante, postulaciones: viewPostulaciones, perfil: viewPerfil, empresa: viewEmpresa, gestion: viewGestion, publicar: viewPublicar, integracion: viewIntegracion };
 
 (async () => {
-  if (!D) { D = freshData(); saveData(); }
+  if (!D) { D = freshData(); saveData(); Engine.reset(); await syncAll(); }
+  else if (NeoConexion.config.mode !== "http") { await syncAll(); }
   go("empleos");
 })();
 })();

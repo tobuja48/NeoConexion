@@ -1,44 +1,53 @@
-# Conecta Empleos · máquina JSON conectada
+# Vacantes originales y máquina JSON independiente
 
-La app proporcionada se integró en `app/web/`. FastAPI la sirve en `/app/`, dentro de la misma imagen Docker y del mismo origen HTTP de la API. Esta versión usa únicamente solicitudes reales: se retiró el motor JavaScript embebido.
+## Dos HTML separados
 
-## Abrir y probar
+- `/app/` sirve `app/web/index.html`: una copia exacta, byte por byte, del archivo `conecta-empleos.html` entregado por el usuario. No se le insertan scripts, botones ni animaciones. SHA-256: `0177c4ba32f5d6e3acca56a23bbdd2d6b6814ab01d786698603e20bc29462126`.
+- `/app/maquina.html` es el visor independiente. Sus recursos son `machine.js`, `machine.css` y `observer.js`. Observa la API desde otra pestaña, sin alterar el HTML de vacantes ni inyectar código en él.
 
-1. Configura `.env` según el README y ejecuta `docker compose up -d --build --wait`.
-2. Abre `http://localhost:8000/app/` o el puerto configurado en `API_PORT`. En el entorno local usado para esta entrega, la dirección es `http://127.0.0.1:18000/app/`.
-3. Pulsa **Conectar / sincronizar API**. La URL inicial corresponde al servidor desde el que abriste la app. Si configuraste `API_KEY`, introdúcela aquí y pulsa **Probar conexión**.
-4. Para trabajar con los ejemplos incluidos, pulsa **Sincronizar todos los datos**: son 11 vacantes y 10 candidatos. Se envían POST reales que crean o reemplazan registros por sus IDs. La app muestra cuántos fueron confirmados y cuántos fallaron.
-5. Elige una sesión de candidato y entra en **Mi perfil**. Al escribir, la máquina muestra el JSON preparado. **Guardar perfil** envía el POST; la vista se desplaza a la máquina y muestra la respuesta real. Después puedes consultar recomendaciones o abrir una vacante para ver el diagnóstico.
-6. Elige una empresa y entra en **Publicar vacante**. Completa los datos y publica: la salida HTTP refleja el registro guardado. El botón **Ver candidatos compatibles** realiza una consulta real de ranking y también queda en el historial de la máquina.
+FastAPI sirve ambas páginas desde la misma imagen Docker. La observación se hace en el servidor mediante middleware ASGI, conservando las respuestas y la validación de los endpoints originales.
 
-Los formularios de la plataforma incluyen campos propios, como título profesional, salario de la oferta y tipo de contrato. Los traductores solo envían a NeoConexión los campos admitidos por sus esquemas; el panel de entrada permite ver esa transformación.
+## Demostración
 
-## Qué significa la animación
+1. Ejecuta `docker compose up -d --build --wait`.
+2. Abre `/app/` en el puerto de la API. Por defecto es `http://localhost:8000/app/`; en el entorno de verificación se usa `http://127.0.0.1:18000/app/`.
+3. En el pie de la app original, abre **Integración NeoConexión**. Selecciona **API NeoConexión por HTTP**, introduce el origen de esta API y, si corresponde, X-API-Key. Guarda la configuración y prueba la conexión. No añadas `/api/v1` ni `/docs` a la URL base.
+4. Abre `/app/maquina.html` en otra pestaña del mismo servidor. Introduce la misma API Key si está configurada.
+5. Desde la página original, guarda un perfil, publica una vacante o consulta compatibilidad. El visor se actualiza aproximadamente cada 700 ms y muestra la entrada y salida observadas en la API.
+6. Para probar con todos los ejemplos, utiliza el botón de sincronización que ya existe en la página original: envía 11 vacantes y 10 candidatos mediante upserts reales por ID. Comprueba los resultados efectivos en el visor; la interfaz original conserva sus mensajes y su comportamiento tal como fue entregada.
 
-| Estado | Evidencia real |
+La página original arranca por defecto con un motor embebido. Ese modo calcula en el navegador y no produce actividad en la API. Para la demostración de JSON reales debes elegir HTTP. Una copia abierta por doble clic requiere CORS para el origen `null`; abrirla desde `/app/` evita esa diferencia de origen.
+
+## Evidencia y límites del visor
+
+El endpoint `GET /api/v1/visualization/requests?after=0` devuelve registros temporales con un cursor de actualización. Está protegido por la misma dependencia X-API-Key que los endpoints de negocio y envía `Cache-Control: no-store`. La propia consulta del visor no se registra, evitando un bucle de observación.
+
+El servidor conserva hasta 40 solicitudes GET o POST de candidatos y vacantes. No registra cabeceras de entrada ni API Keys. Los cuerpos se limitan a 128 KiB por entrada o respuesta; si superan ese límite se indica expresamente y no se presenta un fragmento como si fuera el JSON completo. Los registros existen solo en la memoria del proceso, se pierden al reiniciar y son compartidos entre quienes tienen acceso a esta API de prueba. Está pensado para una demostración local de un solo proceso, no como observabilidad multiusuario de producción.
+
+| Situación | Qué muestra el visor |
 | --- | --- |
-| Preparado | JSON generado a partir del formulario; todavía no se envió |
-| Enviado / esperando | Fetch está pendiente y los engranajes giran |
-| Respuesta HTTP | Se recibió el cuerpo del servidor, con su código y su X-Request-ID si está disponible |
-| Error HTTP | La salida muestra el error real, por ejemplo una validación 422 |
-| Sin confirmación | Hubo un error de red, CORS o timeout; no aparece un JSON de salida inventado |
+| Solicitud observada y pendiente | Máquina trabajando, sin respuesta JSON todavía |
+| Respuesta terminada | Código HTTP, JSON real, duración y X-Request-ID si existe |
+| Error HTTP como 422 | Respuesta real de error, sin convertirla en un éxito |
+| Solicitud muy rápida | Puede llegar ya completada en la siguiente actualización; no se inventa tiempo de procesamiento |
+| Fallo de red antes de alcanzar la API | No hay registro: el servidor no recibió la solicitud |
+| Visor sin conexión | Se informa la desconexión y no se inventan nuevas respuestas |
 
-La máquina representa el recorrido HTTP. No recibe telemetría de pasos internos de Neo4j ni inventa etapas de progreso. Una respuesta rápida puede completar el recorrido casi inmediatamente. Para recomendaciones, la salida es el cálculo real del backend; ese cálculo no crea un registro de ranking persistido.
+La respuesta mostrada corresponde a lo que el servidor produjo y envió. No demuestra que otro navegador ya la haya recibido o mostrado. Los registros del historial pueden describir operaciones anteriores y no son una consulta del estado actual de la base. Las recomendaciones se calculan en el backend; no se persiste un registro de ranking.
 
-Cada POST utiliza el mismo JSON que muestra la entrada. El formulario solo actualiza su copia local después de una respuesta exitosa. Si una respuesta se pierde después de que el servidor haya guardado, no se puede asegurar desde el navegador si hubo commit: la pantalla informa que falta confirmación y el reintento conserva el ID para permitir el upsert.
+El visor no modifica los formularios ni corrige los mensajes optimistas, la búsqueda local o el almacenamiento de la página original. Empresas enriquecidas, sesiones de demostración, postulaciones e invitaciones conservan su implementación original en el navegador. El JSON de la máquina procede de las llamadas reales a la API.
 
-## Configuración y alcance
+La animación respeta movimiento reducido. Su historial visual vive en memoria de la pestaña y permite consultar solicitudes anteriores. La clave del visor se guarda en sessionStorage; la configuración de la página original permanece intacta.
 
-- Abierta en `/app/`, la app usa el mismo origen que la API y no requiere habilitar CORS. Para una API en otro origen, configura `CORS_ORIGINS` con el origen exacto del frontend. Una copia abierta por `file://` envía el origen `null` y necesita esa configuración en desarrollo.
-- La API Key se envía en X-API-Key, se mantiene en sessionStorage de la pestaña y se excluye del historial visual. Es una herramienta local de prueba con clave compartida; el selector de sesiones no es autenticación de usuarios.
-- El historial conserva hasta 40 solicitudes en memoria de la pestaña. Permite revisar la entrada y salida correspondientes sin confundir respuestas de solicitudes simultáneas. No persiste las respuestas en localStorage.
-- Candidatos, vacantes, recomendaciones y diagnóstico usan la API. Empresas enriquecidas, salarios de ofertas, búsqueda local, postulaciones, invitaciones y cambios de estado siguen siendo datos de demostración del navegador.
-- **Restaurar datos** restaura únicamente los ejemplos locales y no borra datos de Neo4j. La sincronización se realiza solo por acción explícita del usuario.
-- Se respetan las preferencias de movimiento reducido. Los errores de red tienen un límite de espera de 20 segundos y no se sustituyen por resultados simulados.
+## Pruebas
 
-## Verificación del navegador
+Backend y Neo4j real:
 
-La prueba requiere la API y Neo4j reales, Node.js 20 o superior, Docker Compose y Playwright. Desde la raíz del proyecto:
+```powershell
+docker compose exec -T api python -m pytest -q -p no:cacheprovider
+```
+
+Navegador, desde la raíz del checkout con Node.js 20 o superior:
 
 ```powershell
 npm ci
@@ -49,8 +58,8 @@ $env:BASE_URL = 'http://127.0.0.1:18000'
 npm run test:browser
 ```
 
-Para usar Edge ya instalado: `$env:BROWSER_CHANNEL = 'msedge'`. Si docker no está en PATH, establece `DOCKER_EXE` con la ruta de su ejecutable. El comando de limpieza asume que BASE_URL pertenece al servicio `api` de Docker Compose de este checkout; no lo apuntes a un despliegue ajeno. `SCREENSHOT_DIR` es opcional para guardar capturas.
+Para Edge instalado: `$env:BROWSER_CHANNEL = 'msedge'`. Si docker no está en PATH, establece `DOCKER_EXE`. `SCREENSHOT_DIR` es opcional para guardar capturas. La prueba y su limpieza asumen que BASE_URL pertenece al servicio `api` de Docker Compose de este checkout; no la apuntes a otro despliegue.
 
-La prueba crea fixtures con un prefijo UUID, comprueba un POST real y consulta el registro guardado antes de liberar la respuesta interceptada hacia el navegador. Mientras esa respuesta está retenida, exige que la máquina siga pendiente y sin salida JSON. Al liberarla, compara el JSON mostrado con el registro real. También verifica ranking, diagnóstico, publicación, actualización sin duplicados, errores 422 reales, fallos de transporte simulados, conteos de sincronización, historial, móvil y movimiento reducido. Al terminar elimina únicamente sus fixtures.
+La prueba verifica la huella exacta del HTML servido, abre las dos páginas, guarda desde el formulario original y compara lo mostrado en la máquina con un GET independiente del registro real. También comprueba publicación, errores 422, ausencia de registros inventados cuando la red falla antes de alcanzar la API, exclusión de claves, vista móvil y movimiento reducido. Solo elimina sus fixtures de prueba.
 
-Las pruebas del backend continúan disponibles con `docker compose exec -T api python -m pytest -q -p no:cacheprovider`.
+Verificación registrada de esta separación: 114 pruebas del backend aprobadas en Docker y prueba de navegador con las dos páginas aprobada.

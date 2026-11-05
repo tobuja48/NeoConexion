@@ -51,11 +51,11 @@
     const entry=selected;
     shell.dataset.state=entry?.state ?? 'idle';
     el('machineRoute').textContent=entry ? `${entry.method} ${entry.path}` : 'Prepara un formulario';
-    el('machineInput').textContent=entry ? (entry.body===undefined?'Sin cuerpo JSON (solicitud GET).':format(entry.body)) : 'Completa los datos de un formulario para ver su JSON.';
-    el('copyMachineInput').disabled=entry?.body===undefined;
+    el('machineInput').textContent=entry?.request_truncated?'La entrada supera el límite del visor; no se muestra como un JSON completo.':entry ? (entry.body===undefined?'Sin cuerpo JSON en esta solicitud.':format(entry.body)) : 'Esperando una solicitud real de la API.';
+    el('copyMachineInput').disabled=entry?.body===undefined||!!entry?.request_truncated;
     const received=!!entry?.received;
-    el('copyMachineOutput').disabled=!received;
-    el('machineOutput').textContent=received ? (entry.json ? format(entry.response) : entry.raw || '(respuesta sin cuerpo)') :
+    el('copyMachineOutput').disabled=!received||!!entry?.response_truncated;
+    el('machineOutput').textContent=entry?.response_truncated?'La respuesta supera el límite del visor; no se muestra como un JSON completo.':received ? (entry.json ? format(entry.response) : entry.raw || '(respuesta sin cuerpo)') :
       entry?.state==='error' ? 'No se recibió respuesta HTTP. No hay JSON de salida confirmado.' :
       entry?.state==='pending' ? 'Esperando a NeoConexión… todavía no hay JSON de salida.' : 'Todavía no se envió esta entrada a la API.';
     el('machineOutputTitle').textContent=received ? `HTTP ${entry.status}` : entry?.state==='pending'?'Procesando solicitud…':entry?.state==='error'?'Sin confirmación':'Esperando envío';
@@ -92,15 +92,16 @@
     },
     finish(entry,response,body,raw,isJson){
       Object.assign(entry,{received:true,status:response.status,response:body,raw,json:isJson,
-        state:response.ok&&isJson?'success':'error',ended:performance.now(),requestId:response.headers.get('X-Request-ID'),
-        message:!isJson?`La respuesta HTTP ${response.status} no contiene JSON válido`:response.ok?`Confirmado por la API · HTTP ${response.status}`:`Respuesta de error de la API · HTTP ${response.status}`});
+        state:response.ok&&(isJson||entry.response_truncated)?'success':'error',ended:performance.now(),requestId:response.headers.get('X-Request-ID'),
+        message:entry.response_truncated?`Respuesta HTTP ${response.status} recibida · cuerpo demasiado grande para el visor`:!isJson?`La respuesta HTTP ${response.status} no contiene JSON válido`:response.ok?`Confirmado por la API · HTTP ${response.status}`:`Respuesta de error de la API · HTTP ${response.status}`});
       if(selected===entry)render();else renderHistory();
     },
     fail(entry,error){
       Object.assign(entry,{state:'error',ended:performance.now(),received:false,
         message:error.name==='AbortError'?'Tiempo de espera agotado · no se recibió confirmación':'No se pudo conectar · no hay respuesta confirmada'});
       if(selected===entry)render();else renderHistory();
-    }
+    },
+    refresh(entry){if(selected===entry)render();}
   };
   [['copyMachineInput','machineInput'],['copyMachineOutput','machineOutput']].forEach(([button,target])=>{
     el(button).onclick=async()=>{try{await navigator.clipboard.writeText(el(target).textContent);el(button).textContent='Copiado';}catch{el(button).textContent='Selecciona el texto';}setTimeout(()=>el(button).textContent='Copiar',1800);};

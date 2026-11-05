@@ -11,6 +11,7 @@ from app.core.neo4j_driver import close_driver, get_driver
 from app.core.config import get_settings
 from app.core.exceptions import register_handlers
 from app.core.logging import configure_logging, install_request_logging
+from app.core.visualization import VisualizationMiddleware
 from app.repositories.schema_setup import setup_schema
 from app.api.v1.router import router
 from app.schemas.common import ERROR_RESPONSES, HealthResponse
@@ -35,6 +36,7 @@ app = FastAPI(
 )
 register_handlers(app)
 install_request_logging(app)
+app.add_middleware(VisualizationMiddleware)
 app.include_router(router)
 app.mount("/app", StaticFiles(directory=Path(__file__).parent / "web", html=True), name="conecta")
 
