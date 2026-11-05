@@ -3,7 +3,7 @@
 ## Dos HTML separados
 
 - `/app/` sirve `app/web/index.html`: una copia exacta, byte por byte, del archivo `conecta-empleos.html` entregado por el usuario. No se le insertan scripts, botones ni animaciones. SHA-256: `0177c4ba32f5d6e3acca56a23bbdd2d6b6814ab01d786698603e20bc29462126`.
-- `/app/maquina.html` es el visor independiente. Sus recursos son `machine.js`, `machine.css` y `observer.js`. Observa la API desde otra pestaña, sin alterar el HTML de vacantes ni inyectar código en él.
+- `/app/maquina.html` es el visor independiente. Sus recursos son `machine.js`, `machine.css`, `observer.js`, `printer-video.js` y los MP4 de `media/`. Observa la API desde otra pestaña, sin alterar el HTML de vacantes ni inyectar código en él.
 
 FastAPI sirve ambas páginas desde la misma imagen Docker. La observación se hace en el servidor mediante middleware ASGI, conservando las respuestas y la validación de los endpoints originales.
 
@@ -19,6 +19,16 @@ FastAPI sirve ambas páginas desde la misma imagen Docker. La observación se ha
 La página original arranca por defecto con un motor embebido. Ese modo calcula en el navegador y no produce actividad en la API. Para la demostración de JSON reales debes elegir HTTP. Una copia abierta por doble clic requiere CORS para el origen `null`; abrirla desde `/app/` evita esa diferencia de origen.
 
 ## Evidencia y límites del visor
+
+### Videos de la impresora
+
+Se reemplazaron los engranajes por tres clips locales, sin dependencias externas de video: `entrada.mp4` (4 s), `espera.mp4` (4 s, bucle) y `salida.mp4` (5 s). Son animaciones renderizadas sobre una imagen fotorrealista compartida de la oficina y la impresora NeoConexión. Se sirven como archivos MP4 H.264 con soporte de Range para reproducción y búsqueda.
+
+Al seleccionar una solicitud, se reproduce la entrada. Si sigue pendiente al acabar ese clip, se repite la espera. Cuando está confirmada como exitosa, se reproduce la salida y se conserva su último fotograma. Si la respuesta ya llegó antes de acabar la entrada, se pasa directamente a salida. Ante un error se detiene el video y se muestra el aviso, sin imprimir una salida verde.
+
+El video es una representación visual: no retrasa, genera ni modifica las respuestas de la API. Los JSON y el código HTTP se muestran en sus paneles reales, aunque el clip todavía esté terminando. La duración del clip no representa la duración del servidor. Pausar o repetir solo controla el video y no reenvía solicitudes. Movimiento reducido utiliza fotogramas estáticos. Si el navegador no reproduce el video, los JSON y el estado HTTP siguen disponibles.
+
+### Registro de solicitudes
 
 El endpoint `GET /api/v1/visualization/requests?after=0` devuelve registros temporales con un cursor de actualización. Está protegido por la misma dependencia X-API-Key que los endpoints de negocio y envía `Cache-Control: no-store`. La propia consulta del visor no se registra, evitando un bucle de observación.
 
@@ -62,4 +72,4 @@ Para Edge instalado: `$env:BROWSER_CHANNEL = 'msedge'`. Si docker no está en PA
 
 La prueba verifica la huella exacta del HTML servido, abre las dos páginas, guarda desde el formulario original y compara lo mostrado en la máquina con un GET independiente del registro real. También comprueba publicación, errores 422, ausencia de registros inventados cuando la red falla antes de alcanzar la API, exclusión de claves, vista móvil y movimiento reducido. Solo elimina sus fixtures de prueba.
 
-Verificación registrada de esta separación: 114 pruebas del backend aprobadas en Docker y prueba de navegador con las dos páginas aprobada.
+Verificación registrada: 118 pruebas del backend aprobadas en Docker; prueba de navegador con las dos páginas y prueba específica de reproducción real de MP4 aprobadas. Esta última controla estados del frontend para verificar entrada, espera, confirmación, errores, pausa, repetición y movimiento reducido sin crear registros de negocio.

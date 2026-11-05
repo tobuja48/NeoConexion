@@ -8,6 +8,7 @@ from app.main import app
     ("/app/", "text/html", "Conecta Empleos"),
     ("/app/maquina.html", "text/html", "visor independiente"),
     ("/app/observer.js", "javascript", "visualization/requests"),
+    ("/app/printer-video.js", "javascript", "PrinterVideo"),
     ("/app/machine.js", "javascript", "JsonMachine"),
     ("/app/machine.css", "text/css", "prefers-reduced-motion"),
 ])
@@ -29,3 +30,13 @@ def test_original_vacancy_html_is_byte_for_byte_the_supplied_document():
     response = TestClient(app).get("/app/")
     assert sha256(response.content).hexdigest() == original_digest
     assert "machine.js" not in response.text
+
+
+@pytest.mark.parametrize("name", ["entrada", "espera", "salida"])
+def test_printer_mp4_supports_range_requests_for_playback_and_seeking(name):
+    response = TestClient(app).get(f"/app/media/{name}.mp4", headers={"Range": "bytes=0-31"})
+    assert response.status_code == 206
+    assert response.headers["content-type"] == "video/mp4"
+    assert response.headers["content-range"].startswith("bytes 0-31/")
+    assert len(response.content) == 32
+    assert response.content[4:8] == b"ftyp"

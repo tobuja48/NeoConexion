@@ -55,6 +55,8 @@ docker compose stop
 
 El HTML de vacantes de `/app/` se conserva exactamente como fue entregado por el usuario, sin insertar scripts ni modificar su interfaz o su comportamiento. Su integridad se verifica mediante SHA-256. La máquina está en otro archivo: `/app/maquina.html`.
 
+El visor utiliza los videos de la impresora NeoConexión: entrada del documento, espera en bucle y salida únicamente tras una respuesta exitosa. Los JSON y el estado HTTP son datos reales mostrados fuera del video. Incluye pausa, repetición visual sin reenviar solicitudes y fotogramas estáticos cuando se solicita movimiento reducido.
+
 En la app original, abre **Integración NeoConexión**, selecciona **API NeoConexión por HTTP** y configura el origen del servidor. Guarda perfiles, publica vacantes o consulta recomendaciones mientras el visor está abierto en otra pestaña. La API registra temporalmente las solicitudes y respuestas para que el visor muestre sus JSON, código HTTP, duración y X-Request-ID. El modo embebido de la app original no genera llamadas a la API y por tanto no aparece en el visor.
 
 Consulta [la guía de Conecta Empleos](docs/CONECTA_EMPLEOS.md) para seguir la demostración, conocer los límites del observador y ejecutar las pruebas de dos páginas. No se necesita npm para usar las páginas: se sirven desde FastAPI y se incluyen en Docker.

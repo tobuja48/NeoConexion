@@ -62,7 +62,9 @@ const data={companies:[company],candidates:[candidate],jobs:[job],applications:[
     await viewer.evaluate(()=>window.scrollTo(0,0));
     if(process.env.SCREENSHOT_DIR){fs.mkdirSync(process.env.SCREENSHOT_DIR,{recursive:true});await viewer.screenshot({path:path.join(process.env.SCREENSHOT_DIR,'maquina-independiente.png')});}
     await viewer.setViewportSize({width:390,height:844});assert.equal(await viewer.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1),false);
-    await viewer.emulateMedia({reducedMotion:'reduce'});assert.equal(await viewer.locator('.machine-gear').first().evaluate(e=>getComputedStyle(e).animationName),'none');
+    await viewer.emulateMedia({reducedMotion:'reduce'});
+    await viewer.waitForFunction(()=>document.getElementById('printerStage').dataset.motion==='reduced');
+    assert.equal(await viewer.locator('#printerVideo').evaluate(e=>e.paused),true);
     assert.deepEqual(errors,[]);
     console.log('PASS: exact original HTML SHA-256; two pages; real profile/job persistence from server; real 422; no fabricated trace on network failure; no API Key leakage; mobile and reduced motion.');
   }finally{

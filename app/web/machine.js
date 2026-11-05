@@ -1,4 +1,4 @@
-/* The animation observes the actual HTTP client. It never fabricates a response. */
+/* The independent viewer renders actual API records, never fabricated responses. */
 (() => {
   const entries = [];
   let selected = null, sequence = 0, ticker = null;
@@ -9,17 +9,14 @@
     <div class="machine-inner"><details open id="machineDetails"><summary>
       <div><div class="machine-eyebrow">Laboratorio en vivo</div><h2>La máquina de NeoConexión</h2></div>
       <span class="machine-summary" id="machineCount">Sin solicitudes</span></summary>
-      <p class="machine-intro">Completa un perfil o publica una vacante. Aquí verás <strong>el JSON que viaja a la API y su respuesta real</strong>. Los engranajes giran mientras la solicitud espera; la salida se libera al recibir HTTP.</p>
-      <div class="machine-line">
-        <div class="machine-port"><span class="machine-port-icon">{ → }</span><b>JSON de entrada</b><small id="machineRoute">Prepara un formulario</small></div>
-        <div class="machine-wire machine-wire-in"><i class="machine-packet"></i></div>
-        <div class="machine-core"><i class="machine-led"></i><svg viewBox="0 0 110 76" aria-hidden="true">
-          <g class="machine-gear" fill="none" stroke="#7ce7c2" stroke-width="6"><circle cx="41" cy="33" r="20" stroke-dasharray="7 5"/><circle cx="41" cy="33" r="10" stroke-width="3"/></g>
-          <g class="machine-gear reverse" fill="none" stroke="#ffcc83" stroke-width="5"><circle cx="77" cy="51" r="15" stroke-dasharray="6 4"/><circle cx="77" cy="51" r="6" stroke-width="3"/></g></svg>
-          <b>NeoConexión</b><small>FastAPI · motor de matching · Neo4j</small></div>
-        <div class="machine-wire machine-wire-out"><i class="machine-packet"></i></div>
-        <div class="machine-port machine-output"><span class="machine-port-icon">{ … }</span><b id="machineOutputTitle">Esperando entrada</b><small id="machineResponseHint">Sin respuesta todavía</small></div>
+      <p class="machine-intro">Aquí verás <strong>el JSON que recibe la API y su respuesta real</strong>. La impresora representa la entrada, la espera y la salida confirmada.</p>
+      <div class="printer-stage" id="printerStage" data-phase="idle">
+        <video id="printerVideo" muted playsinline preload="auto" poster="./media/impresora.png" aria-label="Impresora NeoConexión: entrada, procesamiento y salida del JSON"></video>
+        <div class="printer-caption"><strong id="printerPhase" role="status" aria-live="polite">Esperando una solicitud real</strong><small id="machineRoute">Sin solicitud seleccionada</small></div>
+        <div class="printer-error" id="printerError" hidden>La API no confirmó un resultado exitoso. No se imprime una salida verde.</div>
       </div>
+      <div class="printer-controls"><button id="printerPause" type="button" disabled>Pausar video</button><button id="printerReplay" type="button" disabled>Repetir animación</button><span id="printerMediaStatus">Video de la impresora · JSON real debajo</span></div>
+      <div class="printer-result"><strong id="machineOutputTitle">Esperando entrada</strong><small id="machineResponseHint">Sin respuesta todavía</small></div>
       <div class="machine-steps" aria-label="Estado de la solicitud"><span class="machine-step" data-step="draft">01 Preparado</span><span class="machine-step" data-step="pending">02 Enviado / esperando</span><span class="machine-step" data-step="received">03 Respuesta HTTP</span></div>
       <div class="machine-state"><strong id="machineState" role="status" aria-live="polite">La máquina está lista</strong><span id="machineElapsed"></span><code id="machineRequestId"></code></div>
       <div class="machine-json-grid">
@@ -66,6 +63,7 @@
     shell.querySelectorAll('[data-step]').forEach(step=>step.classList.toggle('active',
       step.dataset.step==='draft'?!!entry:step.dataset.step==='pending'?!!entry&&entry.state!=='draft':received));
     renderHistory();
+    window.PrinterVideo?.sync(entry);
   }
   function schedule(){
     if(ticker===null) ticker=setInterval(()=>{
