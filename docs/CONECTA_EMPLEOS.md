@@ -16,6 +16,8 @@ FastAPI sirve ambas páginas desde la misma imagen Docker. La observación se ha
 5. Desde la página original, guarda un perfil, publica una vacante o consulta compatibilidad. El visor se actualiza aproximadamente cada 700 ms y muestra la entrada y salida observadas en la API.
 6. Para probar con todos los ejemplos, utiliza el botón de sincronización que ya existe en la página original: envía 11 vacantes y 10 candidatos mediante upserts reales por ID. Comprueba los resultados efectivos en el visor; la interfaz original conserva sus mensajes y su comportamiento tal como fue entregada.
 
+Si al pedir recomendaciones aparece **404: Candidato no encontrado**, el perfil local aún no está registrado en la API. Guarda ese perfil o sincroniza los ejemplos desde Integración NeoConexión. El visor muestra esta causa y la acción correspondiente; no la convierte en una impresión exitosa. La misma indicación se aplica a una vacante inexistente.
+
 La página original arranca por defecto con un motor embebido. Ese modo calcula en el navegador y no produce actividad en la API. Para la demostración de JSON reales debes elegir HTTP. Una copia abierta por doble clic requiere CORS para el origen `null`; abrirla desde `/app/` evita esa diferencia de origen.
 
 ## Evidencia y límites del visor

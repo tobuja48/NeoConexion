@@ -10,6 +10,16 @@
   function label(){
     stage.dataset.phase=phase;stage.dataset.motion=animate()?'normal':'reduced';
     el('printerError').hidden=phase!=='error';
+    if(phase==='error'){
+      const detail=entry?.response?.error?.message;
+      const reason=typeof detail==='string'?detail:'La API no confirmó un resultado exitoso.';
+      const missingCandidate=entry?.status===404&&reason.toLowerCase().includes('candidato');
+      const missingJob=entry?.status===404&&reason.toLowerCase().includes('vacante');
+      el('printerError').textContent=missingCandidate?
+        `${reason} Guarda el perfil o sincroniza los ejemplos desde Integración NeoConexión en la app de vacantes.`:
+        missingJob?`${reason} Publica la vacante o sincroniza los ejemplos desde Integración NeoConexión.`:
+        `${entry?.status?'HTTP '+entry.status+': ':''}${reason} No se imprime una salida de éxito.`;
+    }
     const done=entry?.state==='success';
     el('printerPhase').textContent=phase==='preview'?'Video automático · esperando actividad real de la API':phase==='idle'?'Esperando una solicitud real':phase==='error'?`Error${entry?.status?' HTTP '+entry.status:''} · sin impresión de éxito`:
       phase==='entrada'?(done?`Entrada · HTTP ${entry.status} ya confirmado; representación visual`:'Entrada del JSON · solicitud real observada'):
