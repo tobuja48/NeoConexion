@@ -26,6 +26,8 @@ La página original arranca por defecto con un motor embebido. Ese modo calcula 
 
 Se reemplazaron los engranajes por tres clips locales, sin dependencias externas de video: `entrada.mp4` (4 s), `espera.mp4` (4 s, bucle) y `salida.mp4` (5 s). Son animaciones renderizadas sobre una imagen fotorrealista compartida de la oficina y la impresora NeoConexión. Se sirven como archivos MP4 H.264 con soporte de Range para reproducción y búsqueda.
 
+El visor reproduce los tres clips a **2×**: entrada en aproximadamente 2 s, cada vuelta de espera en 2 s y salida en 2.5 s. La espera sigue repitiéndose hasta recibir la respuesta real. Los archivos de video conservan su duración original; la velocidad se aplica en el reproductor, también al cambiar de clip o repetirlo.
+
 Al seleccionar una solicitud, se reproduce la entrada. Si sigue pendiente al acabar ese clip, se repite la espera. Cuando está confirmada como exitosa, se reproduce la salida y se conserva su último fotograma. Si la respuesta ya llegó antes de acabar la entrada, se pasa directamente a salida. Ante un error se detiene el video y se muestra el aviso, sin imprimir una salida verde.
 
 Al abrir el visor sin solicitudes, el clip de espera comienza automáticamente, en silencio y en bucle, rotulado como video automático en espera de actividad real. No crea solicitudes ni JSON de salida. Se puede pausar; la preferencia de movimiento reducido detiene también este bucle. En cuanto se observa una solicitud se aplica el recorrido real descrito arriba.

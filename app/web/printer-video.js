@@ -4,7 +4,9 @@
   const pause=el('printerPause'),replay=el('printerReplay'),status=el('printerMediaStatus');
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const files={preview:'espera.mp4',entrada:'entrada.mp4',espera:'espera.mp4',salida:'salida.mp4'};
+  const playbackSpeed=2;
   video.muted=true;video.defaultMuted=true;
+  video.defaultPlaybackRate=playbackSpeed;video.playbackRate=playbackSpeed;
   let entry=null,identity=null,phase='idle',generation=0,userPaused=false,manualMotion=false;
   const animate=()=>!reduced.matches||manualMotion;
   function label(){
@@ -37,6 +39,7 @@
     const url=new URL('./media/'+files[next],location.href).href;
     video.onloadedmetadata=()=>{
       if(token!==generation||video.currentSrc!==url)return;
+      video.playbackRate=playbackSpeed;
       video.currentTime=freezeEnd?Math.max(0,video.duration-.035):0;
       if(freezeEnd){phase='complete';label();}
       else if(animate()&&!userPaused){
