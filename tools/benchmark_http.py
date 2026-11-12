@@ -93,5 +93,3 @@ async def execute(client, route, count, concurrency, candidate, *, progress=Fals
         'response_bytes_total': sum(s['response_bytes'] for s in samples),
         'generator_cpu_s': round(cpu, 3), 'generator_cpu_one_core_percent': round(cpu / duration * 100, 2)}
     return summary, samples
-
-
