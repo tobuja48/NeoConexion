@@ -1,0 +1,316 @@
+{
+  "generated_at_utc": "2026-11-12T22:44:15.477653+00:00",
+  "before": {
+    "started_at_utc": "2026-11-12T22:40:49.419296+00:00",
+    "base_url": "http://127.0.0.1:18000",
+    "client_processes": 4,
+    "total_concurrency": 50,
+    "concurrency_by_process": [
+      13,
+      13,
+      12,
+      12
+    ],
+    "warmup_per_case_excluded": 100,
+    "endpoint": "/api/v1/candidates/c-202/recommendations?limit=10&minScore=0",
+    "method": "GET",
+    "model": "closed-loop, 4 independent HTTP clients, keep-alive, no retries",
+    "api_revision": "a70be328f1618a6a4b42d814aa01e5b53b930760",
+    "benchmark_git_revision": "c31157ba1286eb353d0f9f08678b2203eda6d5bf",
+    "working_tree_dirty": false,
+    "results": [
+      {
+        "requests": 300,
+        "concurrency": 50,
+        "client_processes": 4,
+        "duration_s": 1.322852,
+        "successful": 300,
+        "failed": 0,
+        "throughput_rps": 226.783,
+        "latency_ms_all": {
+          "mean": 211.43,
+          "min": 33.429,
+          "max": 309.144,
+          "p50": 216.602,
+          "p95": 251.485,
+          "p99": 277.708
+        },
+        "latency_ms_success": {
+          "mean": 211.43,
+          "min": 33.429,
+          "max": 309.144,
+          "p50": 216.602,
+          "p95": 251.485,
+          "p99": 277.708
+        },
+        "http_status_counts": {
+          "200": 300
+        },
+        "error_counts": {},
+        "recommendation_total_counts": {
+          "8": 300
+        },
+        "unique_request_ids": 300,
+        "generator_cpu_s_total": 0.657,
+        "generator_cpu_one_core_percent_by_process": [
+          10.84,
+          14.46,
+          13.0,
+          11.82
+        ]
+      },
+      {
+        "requests": 10000,
+        "concurrency": 50,
+        "client_processes": 4,
+        "duration_s": 44.20754,
+        "successful": 10000,
+        "failed": 0,
+        "throughput_rps": 226.206,
+        "latency_ms_all": {
+          "mean": 216.23,
+          "min": 50.438,
+          "max": 355.625,
+          "p50": 217.387,
+          "p95": 264.994,
+          "p99": 292.315
+        },
+        "latency_ms_success": {
+          "mean": 216.23,
+          "min": 50.438,
+          "max": 355.625,
+          "p50": 217.387,
+          "p95": 264.994,
+          "p99": 292.315
+        },
+        "http_status_counts": {
+          "200": 10000
+        },
+        "error_counts": {},
+        "recommendation_total_counts": {
+          "8": 10000
+        },
+        "unique_request_ids": 10000,
+        "generator_cpu_s_total": 46.234,
+        "generator_cpu_one_core_percent_by_process": [
+          27.47,
+          27.83,
+          25.71,
+          25.73
+        ]
+      }
+    ],
+    "finished_at_utc": "2026-11-12T22:41:37.378649+00:00"
+  },
+  "after": {
+    "started_at_utc": "2026-11-12T22:41:57.603715+00:00",
+    "base_url": "http://127.0.0.1:18000",
+    "client_processes": 4,
+    "total_concurrency": 50,
+    "concurrency_by_process": [
+      13,
+      13,
+      12,
+      12
+    ],
+    "warmup_per_case_excluded": 100,
+    "endpoint": "/api/v1/candidates/c-202/recommendations?limit=10&minScore=0",
+    "method": "GET",
+    "model": "closed-loop, 4 independent HTTP clients, keep-alive, no retries",
+    "api_revision": "c31157ba1286eb353d0f9f08678b2203eda6d5bf",
+    "benchmark_git_revision": "c31157ba1286eb353d0f9f08678b2203eda6d5bf",
+    "working_tree_dirty": false,
+    "results": [
+      {
+        "requests": 300,
+        "concurrency": 50,
+        "client_processes": 4,
+        "duration_s": 0.663757,
+        "successful": 300,
+        "failed": 0,
+        "throughput_rps": 451.973,
+        "latency_ms_all": {
+          "mean": 106.151,
+          "min": 22.962,
+          "max": 185.414,
+          "p50": 100.676,
+          "p95": 169.078,
+          "p99": 179.386
+        },
+        "latency_ms_success": {
+          "mean": 106.151,
+          "min": 22.962,
+          "max": 185.414,
+          "p50": 100.676,
+          "p95": 169.078,
+          "p99": 179.386
+        },
+        "http_status_counts": {
+          "200": 300
+        },
+        "error_counts": {},
+        "recommendation_total_counts": {
+          "8": 300
+        },
+        "unique_request_ids": 300,
+        "generator_cpu_s_total": 0.735,
+        "generator_cpu_one_core_percent_by_process": [
+          35.65,
+          21.36,
+          28.45,
+          25.9
+        ]
+      },
+      {
+        "requests": 10000,
+        "concurrency": 50,
+        "client_processes": 4,
+        "duration_s": 21.164474,
+        "successful": 10000,
+        "failed": 0,
+        "throughput_rps": 472.49,
+        "latency_ms_all": {
+          "mean": 102.591,
+          "min": 31.804,
+          "max": 589.802,
+          "p50": 102.005,
+          "p95": 129.78,
+          "p99": 153.702
+        },
+        "latency_ms_success": {
+          "mean": 102.591,
+          "min": 31.804,
+          "max": 589.802,
+          "p50": 102.005,
+          "p95": 129.78,
+          "p99": 153.702
+        },
+        "http_status_counts": {
+          "200": 10000
+        },
+        "error_counts": {},
+        "recommendation_total_counts": {
+          "8": 10000
+        },
+        "unique_request_ids": 10000,
+        "generator_cpu_s_total": 41.094,
+        "generator_cpu_one_core_percent_by_process": [
+          50.31,
+          52.18,
+          49.03,
+          48.22
+        ]
+      }
+    ],
+    "finished_at_utc": "2026-11-12T22:42:21.356931+00:00"
+  },
+  "comparison": [
+    {
+      "requests": 300,
+      "duration_reduction_percent": 49.82,
+      "mean_latency_reduction_percent": 49.79,
+      "p95_latency_reduction_percent": 32.77,
+      "throughput_increase_percent": 99.3
+    },
+    {
+      "requests": 10000,
+      "duration_reduction_percent": 52.12,
+      "mean_latency_reduction_percent": 52.55,
+      "p95_latency_reduction_percent": 51.03,
+      "throughput_increase_percent": 108.88
+    }
+  ],
+  "environment": {
+    "date": "2026-11-12",
+    "timezone": "America/Bogota",
+    "host_logical_processors": 28,
+    "host_ram_gib": 31.72,
+    "docker_cpus_visible": 28,
+    "docker_memory_limit_gib": 15.48,
+    "api": "FastAPI / Uvicorn, one worker",
+    "database": "Neo4j 5.26.12 community",
+    "candidates": 11,
+    "jobs": 12,
+    "returned_recommendations_per_request": 8,
+    "observer_and_logging": "enabled",
+    "client_location": "Windows host, same physical computer as Docker/WSL2 server and DB"
+  },
+  "snapshots": [
+    {
+      "api_revision": "a70be328f1618a6a4b42d814aa01e5b53b930760",
+      "responses": {
+        "/api/v1/candidates/c-202/recommendations?limit=10&minScore=0": {
+          "sha256": "9de1c1744ddf27d52683328b09322b2eeaefb7c718f908c73809542ee355d7e1",
+          "bytes": 4199,
+          "total": 8
+        },
+        "/api/v1/jobs/j-101/candidates?limit=10&minScore=0": {
+          "sha256": "58d81717ffec3155ae2d1fcaca4ea7b67bc6101cb3c0feae34a89fb8c79033cd",
+          "bytes": 3507,
+          "total": 7
+        }
+      },
+      "dataset": {
+        "candidates": 11,
+        "jobs": 12
+      },
+      "image_id": "sha256:a9fc25176ca80ded2a2c76466ef96a7264ae19864009bc38f73d7116e429034a",
+      "original_html_sha256": "0177c4ba32f5d6e3acca56a23bbdd2d6b6814ab01d786698603e20bc29462126"
+    },
+    {
+      "api_revision": "c31157ba1286eb353d0f9f08678b2203eda6d5bf",
+      "responses": {
+        "/api/v1/candidates/c-202/recommendations?limit=10&minScore=0": {
+          "sha256": "9de1c1744ddf27d52683328b09322b2eeaefb7c718f908c73809542ee355d7e1",
+          "bytes": 4199,
+          "total": 8
+        },
+        "/api/v1/jobs/j-101/candidates?limit=10&minScore=0": {
+          "sha256": "58d81717ffec3155ae2d1fcaca4ea7b67bc6101cb3c0feae34a89fb8c79033cd",
+          "bytes": 3507,
+          "total": 7
+        }
+      },
+      "dataset": {
+        "candidates": 11,
+        "jobs": 12
+      },
+      "image_id": "sha256:49cbc054892493e285a52c47e38f0e0b1bec3a0011d31ce66d6ec52c717aa7a2",
+      "original_html_sha256": "0177c4ba32f5d6e3acca56a23bbdd2d6b6814ab01d786698603e20bc29462126"
+    },
+    {
+      "api_revision": "c31157ba1286eb353d0f9f08678b2203eda6d5bf",
+      "responses": {
+        "/api/v1/candidates/c-202/recommendations?limit=10&minScore=0": {
+          "sha256": "9de1c1744ddf27d52683328b09322b2eeaefb7c718f908c73809542ee355d7e1",
+          "bytes": 4199,
+          "total": 8
+        },
+        "/api/v1/jobs/j-101/candidates?limit=10&minScore=0": {
+          "sha256": "58d81717ffec3155ae2d1fcaca4ea7b67bc6101cb3c0feae34a89fb8c79033cd",
+          "bytes": 3507,
+          "total": 7
+        }
+      },
+      "dataset": {
+        "candidates": 11,
+        "jobs": 12
+      },
+      "image_id": "sha256:49cbc054892493e285a52c47e38f0e0b1bec3a0011d31ce66d6ec52c717aa7a2",
+      "original_html_sha256": "0177c4ba32f5d6e3acca56a23bbdd2d6b6814ab01d786698603e20bc29462126"
+    }
+  ],
+  "evidence_sha256": {
+    "comparacion-base/latencias-300.csv": "0f0cb8be355ea1c294d9285e4e658efbabbde923413285826d6078e731e73fde",
+    "comparacion-base/latencias-10000.csv": "5d8d7bc1eef544141cdfe160fffbecafcac1bd613610ed2db393965c4de1d450",
+    "comparacion-base/resultados.json": "4878a55f921670e3085dbe5480328a5d6e87c52bafd53fbe26acfc467e93a9d9",
+    "comparacion-optimizada/latencias-300.csv": "d551ef64dd5e45082d02deba02671d48854140f0bc35fa628d1acc197f1db3c6",
+    "comparacion-optimizada/latencias-10000.csv": "90bd5daa240516544b0959963ab2ef0356476751ff5439589546e193d2c50bdd",
+    "comparacion-optimizada/resultados.json": "5370928804d5dbbff5060569574f015b4f83614e738e3f9f611546d5943a13b3"
+  },
+  "correctness": {
+    "backend": "121 passed in 1.28s",
+    "browser": "Both Edge suites passed",
+    "response_bytes_identical_both_ranking_directions": true
+  }
+}
