@@ -1,9 +1,11 @@
 from collections.abc import Callable
 
+from app.core.exceptions import NotFound
 from app.domain.matching.engine import score
 from app.domain.matching.models import Candidate, Job, MatchResult
 from app.domain.matching.weights import Weights
 from app.domain.matching.normalization import key
+from app.repositories.matching_repository import MatchingRepository
 from app.services.candidate_service import CandidateService
 from app.services.job_service import JobService
 
@@ -12,22 +14,30 @@ Scorer = Callable[[Candidate, Job, Weights], MatchResult]
 
 class MatchingService:
     def __init__(self, candidates: CandidateService, jobs: JobService,
-                 weights: Weights, scorer: Scorer = score) -> None:
+                 weights: Weights, scorer: Scorer = score,
+                 repository: MatchingRepository | None = None) -> None:
         self.candidates, self.jobs = candidates, jobs
         self.weights, self.scorer = weights, scorer
+        self.repository = repository if repository is not None else MatchingRepository(candidates.repository.driver)
 
     def for_candidate(self, entity_id: str, limit: int,
                       min_score: float) -> tuple[int, list[tuple[Job, MatchResult]]]:
-        candidate = self.candidates.get(entity_id)
+        context = self.repository.for_candidate(entity_id)
+        if context is None:
+            raise NotFound("Candidato")
+        candidate, jobs = context
         pairs = [(job, self.scorer(candidate, job, self.weights))
-                 for job in self.jobs.repository.for_candidate(entity_id)]
+                 for job in jobs]
         return self._rank(pairs, limit, min_score)
 
     def for_job(self, entity_id: str, limit: int,
                 min_score: float) -> tuple[int, list[tuple[Candidate, MatchResult]]]:
-        job = self.jobs.get(entity_id)
+        context = self.repository.for_job(entity_id)
+        if context is None:
+            raise NotFound("Vacante")
+        job, candidates = context
         pairs = [(candidate, self.scorer(candidate, job, self.weights))
-                 for candidate in self.candidates.repository.for_job(entity_id)]
+                 for candidate in candidates]
         return self._rank(pairs, limit, min_score)
 
     @staticmethod

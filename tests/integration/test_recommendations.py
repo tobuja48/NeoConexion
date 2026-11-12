@@ -69,3 +69,21 @@ def test_normalization_and_desired_only_prefilter(client: TestClient, candidate_
     assert result["total"] == 1
     assert result["recommendations"][0]["matchScore"] == 65.0
     assert result["recommendations"][0]["missingSkills"] == [prefix + "Python"]
+
+
+def test_rankings_see_updates_immediately_and_restore_empty_matches(client, candidate_data, job_data, prefix):
+    client.post("/api/v1/candidates", json=candidate_data).raise_for_status()
+    client.post("/api/v1/jobs", json=job_data).raise_for_status()
+    candidate_path = f"/api/v1/candidates/{candidate_data['id']}/recommendations"
+    job_path = f"/api/v1/jobs/{job_data['id']}/candidates"
+    assert client.get(candidate_path).json()["total"] == 1
+    assert client.get(job_path).json()["total"] == 1
+    client.post("/api/v1/candidates", json=candidate_data | {"skills": []}).raise_for_status()
+    assert client.get(candidate_path).json()["total"] == 0
+    assert client.get(job_path).json()["total"] == 0
+    client.post("/api/v1/candidates", json=candidate_data).raise_for_status()
+    client.post("/api/v1/jobs", json=job_data | {"requiredSkills": [prefix + "Rust"], "desiredSkills": []}).raise_for_status()
+    assert client.get(candidate_path).json()["total"] == 0
+    assert client.get(job_path).json()["total"] == 0
+    client.post("/api/v1/jobs", json=job_data).raise_for_status()
+    assert client.get(candidate_path).json()["recommendations"][0]["matchScore"] == 100
