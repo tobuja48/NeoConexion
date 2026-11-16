@@ -11,6 +11,7 @@ Reconstrucción sobre el repositorio inicial mediante **40 PRs encadenados**. La
 - [Verificación reproducible](VERIFICATION.md): pruebas y límites comprobados.
 - [Rendimiento de la API](docs/PERFORMANCE.md): optimizaciones y comparación real de 300 y 10.000 solicitudes.
 - [Manual interactivo](documentacion.html): abrir el archivo en un navegador; no requiere servidor para el simulador.
+- [Manual completo en PDF](docs/NeoConexion-manual-completo.pdf): 47 páginas con arquitectura, contratos, algoritmo, grafo, Docker, app, visor, pruebas y guía para exponer; edición del 15 de noviembre de 2026.
 
 ## Arranque con Docker
 
@@ -125,6 +126,6 @@ Score = habilidades × 0.50 + experiencia × 0.25 + ubicación × 0.15 + modalid
 
 ## Límites y seguridad
 
-No hay portal de usuarios, postulaciones, roles, correos, n8n, IA generativa, feedback persistido, aprendizaje de pesos, CI/CD ni pruebas de carga. Los rankings puntúan en memoria todos los candidatos prefiltrados. La normalización no unifica sinónimos ni acentos; los catálogos huérfanos pueden acumularse. Los logs propios usan identificadores de solicitud y evitan cuerpos y claves.
+No hay portal de usuarios, postulaciones, roles, correos, n8n, IA generativa, feedback persistido, aprendizaje de pesos ni CI/CD. Las pruebas de carga documentadas cubren un escenario local con base pequeña y 50 peticiones activas; no certifican capacidad de producción. Los rankings puntúan en memoria todos los candidatos prefiltrados. La normalización no unifica sinónimos ni acentos; los catálogos huérfanos pueden acumularse. Los logs propios usan identificadores de solicitud y evitan cuerpos y claves.
 
 Los puertos de Compose se enlazan a 127.0.0.1. No publiques `.env`. Los datos de pruebas usan prefijos aleatorios y se limpian sin borrar datos ajenos. Para una exposición, Swagger muestra solicitudes reales y el HTML ofrece una simulación didáctica que no escribe en la base.
