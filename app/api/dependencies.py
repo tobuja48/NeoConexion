@@ -18,25 +18,31 @@ from app.domain.matching.weights import Weights
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
-def require_api_key(value: Annotated[str | None, Security(api_key_header)] = None) -> None:
+async def require_api_key(value: Annotated[str | None, Security(api_key_header)] = None) -> None:
     configured = get_settings().api_key.get_secret_value()
     if configured and (value is None or not compare_digest(value.encode(), configured.encode())):
         raise AppError("VALIDATION_ERROR", "API Key inválida o ausente.", 401)
 
 
-def get_candidate_service(driver: Annotated[Driver, Depends(get_driver)]) -> CandidateService:
+async def get_request_driver() -> Driver:
+    # Lifespan initializes the pool. Fetching its handle does not access Neo4j.
+    # Keep blocking queries in the synchronous route's worker thread.
+    return get_driver()
+
+
+async def get_candidate_service(driver: Annotated[Driver, Depends(get_request_driver)]) -> CandidateService:
     return CandidateService(CandidateRepository(driver))
 
 
-def get_job_service(driver: Annotated[Driver, Depends(get_driver)]) -> JobService:
+async def get_job_service(driver: Annotated[Driver, Depends(get_request_driver)]) -> JobService:
     return JobService(JobRepository(driver))
 
 
-def get_weights() -> Weights:
+async def get_weights() -> Weights:
     return Weights()
 
 
-def get_matching_service(
+async def get_matching_service(
     candidates: Annotated[CandidateService, Depends(get_candidate_service)],
     jobs: Annotated[JobService, Depends(get_job_service)],
     weights: Annotated[Weights, Depends(get_weights)],

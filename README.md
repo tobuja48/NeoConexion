@@ -9,6 +9,7 @@ Reconstrucción sobre el repositorio inicial mediante **40 PRs encadenados**. La
 - [Índice de los 40 PRs](docs/PULL_REQUESTS.md): orden, alcance y ramas.
 - [Historias y cobertura](docs/USER_STORIES.md): las 24 historias reales del repositorio.
 - [Verificación reproducible](VERIFICATION.md): pruebas y límites comprobados.
+- [Rendimiento de la API](docs/PERFORMANCE.md): optimizaciones y comparación real de 300 y 10.000 solicitudes.
 - [Manual interactivo](documentacion.html): abrir el archivo en un navegador; no requiere servidor para el simulador.
 
 ## Arranque con Docker
