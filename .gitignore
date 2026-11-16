@@ -8,3 +8,4 @@ pytest-cache-files-*/
 .DS_Store
 .coverage
 .venv/
+node_modules/
